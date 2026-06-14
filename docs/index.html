@@ -24,7 +24,13 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family:
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
       color: var(--text);
       background:
         radial-gradient(circle at 20% 10%, rgba(249, 115, 22, 0.16), transparent 28%),
@@ -35,6 +41,10 @@
     a {
       color: inherit;
       text-decoration: none;
+    }
+    button,
+    summary {
+      -webkit-tap-highlight-color: transparent;
     }
     .page {
       width: min(1080px, calc(100% - 32px));
@@ -52,16 +62,31 @@
       backdrop-filter: blur(22px);
       box-shadow: var(--shadow);
     }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(120deg, rgba(249, 115, 22, 0.12), transparent 36%),
+        linear-gradient(240deg, rgba(59, 130, 246, 0.12), transparent 36%);
+      pointer-events: none;
+    }
+    .hero > * {
+      position: relative;
+      z-index: 1;
+    }
     .eyebrow {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
       padding: 8px 14px;
       border: 1px solid var(--border);
       border-radius: 999px;
       color: var(--muted);
       font-size: 13px;
-      background: rgba(255, 255, 255, 0.52);
+      line-height: 1;
+      background: rgba(255, 255, 255, 0.62);
     }
     .dot {
       width: 8px;
@@ -69,6 +94,7 @@
       border-radius: 99px;
       background: var(--green);
       box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.12);
+      flex-shrink: 0;
     }
     h1 {
       margin: 22px 0 10px;
@@ -78,7 +104,7 @@
     }
     .subtitle {
       margin: 0 auto;
-      max-width: 640px;
+      max-width: 680px;
       color: var(--muted);
       font-size: clamp(16px, 2.8vw, 20px);
       line-height: 1.8;
@@ -132,7 +158,7 @@
       min-height: 46px;
       padding: 0 18px;
       border-radius: 999px;
-      font-weight: 650;
+      font-weight: 700;
       border: 1px solid var(--border);
       background: #fff;
       box-shadow: 0 12px 36px rgba(15, 23, 42, 0.06);
@@ -192,6 +218,7 @@
     .category-title {
       margin: 0;
       font-size: 28px;
+      line-height: 1.1;
       letter-spacing: -0.04em;
     }
     .category-desc {
@@ -200,17 +227,27 @@
       line-height: 1.6;
     }
     .chevron {
-      width: 36px;
-      height: 36px;
-      display: grid;
-      place-items: center;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       border-radius: 999px;
       background: rgba(15, 23, 42, 0.06);
       color: var(--muted);
+      flex-shrink: 0;
+    }
+    .chevron::before {
+      content: "";
+      width: 9px;
+      height: 9px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: translateY(-2px) rotate(45deg);
       transition: transform 0.2s ease;
     }
-    details[open] .chevron {
-      transform: rotate(180deg);
+    details[open] .chevron::before {
+      transform: translateY(2px) rotate(225deg);
     }
     .file-list {
       display: grid;
@@ -227,7 +264,10 @@
       border-radius: 18px;
       padding: 14px;
       background: rgba(255, 255, 255, 0.72);
-      transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+      transition:
+        transform 0.18s ease,
+        border-color 0.18s ease,
+        background 0.18s ease;
     }
     .file:hover {
       transform: translateY(-2px);
@@ -236,7 +276,7 @@
     }
     .file-title {
       display: block;
-      font-weight: 760;
+      font-weight: 780;
       letter-spacing: -0.02em;
       word-break: break-word;
     }
@@ -253,21 +293,32 @@
       align-items: center;
     }
     .mini {
-      height: 34px;
-      padding: 0 12px;
+      height: 38px;
+      min-width: 82px;
+      padding: 0 14px;
       border: 1px solid var(--border);
       border-radius: 999px;
       background: #fff;
       color: var(--text);
       font-weight: 700;
-      font-size: 12px;
+      font-size: 13px;
       cursor: pointer;
       white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      line-height: 1;
     }
     .mini.raw {
       color: #fff;
       border-color: #0f172a;
       background: #0f172a;
+    }
+    .empty {
+      padding: 0 26px 26px;
+      color: var(--muted);
+      line-height: 1.8;
     }
     .note {
       margin-top: 18px;
@@ -280,6 +331,7 @@
     .note h2 {
       margin: 0 0 12px;
       font-size: 22px;
+      line-height: 1.2;
       letter-spacing: -0.04em;
     }
     .note p {
@@ -337,6 +389,7 @@
       }
       .mini {
         flex: 1;
+        min-width: 0;
       }
     }
   </style>
@@ -346,7 +399,7 @@
     <section class="hero">
       <div class="eyebrow">
         <span class="dot"></span>
-        Maintained for personal use
+        个人维护中
       </div>
   <h1>ProxyKit</h1>
   <p class="subtitle">
@@ -355,20 +408,22 @@
   </p>
   <div class="badges">
     <div class="badge green">
-      <span>updated</span>
-      <span>active</span>
+      <span>状态</span>
+      <span>维护中</span>
     </div>
     <div class="badge blue">
-      <span>type</span>
-      <span>config</span>
+      <span>类型</span>
+      <span>配置</span>
     </div>
     <div class="badge violet">
-      <span>use</span>
-      <span>personal</span>
+      <span>用途</span>
+      <span>自用</span>
     </div>
   </div>
   <div class="actions">
-    <a class="button primary" href="https://github.com/Luke-Lab666/ProxyKit" target="_blank" rel="noopener">View Repository</a>
+    <a class="button primary" href="https://github.com/Luke-Lab666/ProxyKit" target="_blank" rel="noopener">
+      查看仓库
+    </a>
   </div>
 </section>
 <section class="menu" id="menu"></section>
@@ -379,7 +434,7 @@
   </p>
 </section>
 <footer>
-  ProxyKit · Personal proxy configuration toolkit.
+  ProxyKit · 个人代理配置集合
 </footer>
   </main>
   <script>
@@ -391,96 +446,146 @@
         desc: "分流规则、域名规则、IP 规则。",
         icon: "R",
         iconClass: "rules",
-        files: [
-          "Rule/APNs",
-          "Rule/AppleCN",
-          "Rule/AppleFull",
-          "Rule/Emby",
-          "Rule/GeoIP",
-          "Rule/Net-Info-D",
-          "Rule/Net-Info-G",
-          "Rule/NotGeoIP",
-          "Rule/REJECT",
-          "Rule/Telegram"
-        ]
+        folder: "Rule"
       },
       {
         title: "Scripts",
         desc: "JavaScript 脚本配置。",
         icon: "JS",
         iconClass: "scripts",
-        files: [
-          "Scripts/dns-lite.js",
-          "Scripts/kill-connections-lite.js"
-        ]
+        folder: "Scripts"
       },
       {
         title: "Modules",
         desc: "Surge 模块与相关配置。",
         icon: "M",
         iconClass: "modules",
-        files: [
-          "SurgeModule/DNS Lite",
-          "SurgeModule/kill-connections-lite.sgmodule"
-        ]
+        folder: "SurgeModule"
       }
     ];
+    const fallbackFiles = [
+      "Rule/APNs",
+      "Rule/AppleCN",
+      "Rule/AppleFull",
+      "Rule/Emby",
+      "Rule/GeoIP",
+      "Rule/Net-Info-D",
+      "Rule/Net-Info-G",
+      "Rule/NotGeoIP",
+      "Rule/REJECT",
+      "Rule/Telegram",
+      "Scripts/dns-lite.js",
+      "Scripts/kill-connections-lite.js",
+      "SurgeModule/DNS Lite",
+      "SurgeModule/kill-connections-lite.sgmodule"
+    ];
     const menu = document.getElementById("menu");
-    const getRawUrl = (path) => {
-      const encodedPath = path.split("/").map(encodeURIComponent).join("/");
-      return `https://raw.githubusercontent.com/${repo}/${branch}/${encodedPath}`;
+    const encodePath = (path) => {
+      return path.split("/").map(encodeURIComponent).join("/");
     };
-    const getFileName = (path) => path.split("/").pop();
-    menu.innerHTML = categories.map((category) => {
-      const files = category.files.map((path) => {
-        const raw = getRawUrl(path);
-        const name = getFileName(path);
-        return `
-          <div class="file">
-            <a href="${raw}" target="_blank" rel="noopener">
-              <span class="file-title">${name}</span>
-              <span class="file-path">${path}</span>
-            </a>
-            <div class="file-actions">
-              <a class="mini raw" href="${raw}" target="_blank" rel="noopener">Raw</a>
-              <button class="mini" data-copy="${raw}">Copy</button>
-            </div>
+    const getRawUrl = (path) => {
+      return `https://raw.githubusercontent.com/${repo}/${branch}/${encodePath(path)}`;
+    };
+    const getFileName = (path) => {
+      return path.split("/").pop();
+    };
+    const sortFiles = (files) => {
+      return files.sort((a, b) => {
+        return a.localeCompare(b, "zh-CN", {
+          numeric: true,
+          sensitivity: "base"
+        });
+      });
+    };
+    const renderFile = (path) => {
+      const raw = getRawUrl(path);
+      const name = getFileName(path);
+      return `
+        <div class="file">
+          <a href="${raw}" target="_blank" rel="noopener">
+            <span class="file-title">${name}</span>
+            <span class="file-path">${path}</span>
+          </a>
+          <div class="file-actions">
+            <a class="mini raw" href="${raw}" target="_blank" rel="noopener">Raw</a>
+            <button class="mini" type="button" data-copy="${raw}">Copy</button>
           </div>
+        </div>
+      `;
+    };
+    const renderMenu = (allFiles) => {
+      menu.innerHTML = categories.map((category) => {
+        const files = sortFiles(
+          allFiles.filter((path) => {
+            return path.startsWith(`${category.folder}/`);
+          })
+        );
+        const fileList = files.length
+          ? files.map(renderFile).join("")
+          : `<div class="empty">这个分类暂时没有可显示的文件。</div>`;
+        return `
+          <details class="category">
+            <summary>
+              <div class="category-head">
+                <div class="icon ${category.iconClass}">${category.icon}</div>
+                <div>
+                  <h2 class="category-title">${category.title}</h2>
+                  <p class="category-desc">${category.desc}</p>
+                </div>
+                <div class="chevron" aria-hidden="true"></div>
+              </div>
+            </summary>
+            <div class="file-list">
+              ${fileList}
+            </div>
+          </details>
         `;
       }).join("");
-      return `
-        <details class="category">
-          <summary>
-            <div class="category-head">
-              <div class="icon ${category.iconClass}">${category.icon}</div>
-              <div>
-                <h2 class="category-title">${category.title}</h2>
-                <p class="category-desc">${category.desc}</p>
-              </div>
-              <div class="chevron">⌄</div>
-            </div>
-          </summary>
-          <div class="file-list">
-            ${files}
-          </div>
-        </details>
-      `;
-    }).join("");
-    document.querySelectorAll("[data-copy]").forEach((button) => {
-      button.addEventListener("click", async () => {
-        const text = button.getAttribute("data-copy");
-        const oldText = button.textContent;
-        try {
-          await navigator.clipboard.writeText(text);
-          button.textContent = "Copied";
-        } catch {
-          button.textContent = "Failed";
-        }
-        setTimeout(() => {
-          button.textContent = oldText;
-        }, 1200);
+      bindCopyButtons();
+    };
+    const bindCopyButtons = () => {
+      document.querySelectorAll("[data-copy]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const text = button.getAttribute("data-copy");
+          const oldText = button.textContent;
+          try {
+            await navigator.clipboard.writeText(text);
+            button.textContent = "Copied";
+          } catch {
+            button.textContent = "Failed";
+          }
+          setTimeout(() => {
+            button.textContent = oldText;
+          }, 1200);
+        });
       });
-    });
+    };
+    const loadFiles = async () => {
+      try {
+        const url = `https://api.github.com/repos/${repo}/git/trees/${branch}?recursive=1`;
+        const response = await fetch(url, {
+          headers: {
+            Accept: "application/vnd.github+json"
+          }
+        });
+        if (!response.ok) {
+          throw new Error("GitHub API request failed");
+        }
+        const data = await response.json();
+        const files = data.tree
+          .filter((item) => item.type === "blob")
+          .map((item) => item.path)
+          .filter((path) => {
+            return categories.some((category) => {
+              return path.startsWith(`${category.folder}/`);
+            });
+          });
+        renderMenu(files);
+      } catch {
+        renderMenu(fallbackFiles);
+      }
+    };
+    loadFiles();
   </script>
 </body>
 </html>
