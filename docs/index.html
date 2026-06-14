@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ProxyKit</title>
   <meta name="description" content="Personal proxy rules, scripts and modules." />
-
   <style>
     :root {
       --bg: #f8fafc;
@@ -19,11 +18,12 @@
       --orange: #f97316;
       --shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
     }
-
     * {
       box-sizing: border-box;
     }
-
+    html {
+      scroll-behavior: smooth;
+    }
     body {
       margin: 0;
       min-height: 100vh;
@@ -35,18 +35,15 @@
         radial-gradient(circle at 50% 90%, rgba(139, 92, 246, 0.12), transparent 30%),
         var(--bg);
     }
-
     a {
       color: inherit;
       text-decoration: none;
     }
-
     .page {
       width: min(1080px, calc(100% - 32px));
       margin: 0 auto;
       padding: 56px 0 36px;
     }
-
     .hero {
       position: relative;
       overflow: hidden;
@@ -58,7 +55,6 @@
       backdrop-filter: blur(22px);
       box-shadow: var(--shadow);
     }
-
     .hero::before {
       content: "";
       position: absolute;
@@ -68,12 +64,10 @@
         linear-gradient(240deg, rgba(59, 130, 246, 0.12), transparent 36%);
       pointer-events: none;
     }
-
     .hero > * {
       position: relative;
       z-index: 1;
     }
-
     .eyebrow {
       display: inline-flex;
       align-items: center;
@@ -85,7 +79,6 @@
       font-size: 13px;
       background: rgba(255, 255, 255, 0.52);
     }
-
     .dot {
       width: 8px;
       height: 8px;
@@ -93,14 +86,12 @@
       background: var(--green);
       box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.12);
     }
-
     h1 {
       margin: 22px 0 10px;
       font-size: clamp(42px, 8vw, 84px);
       line-height: 0.95;
       letter-spacing: -0.07em;
     }
-
     .subtitle {
       margin: 0 auto;
       max-width: 640px;
@@ -108,7 +99,6 @@
       font-size: clamp(16px, 2.8vw, 20px);
       line-height: 1.8;
     }
-
     .badges {
       display: flex;
       justify-content: center;
@@ -116,7 +106,6 @@
       gap: 10px;
       margin-top: 26px;
     }
-
     .badge {
       display: inline-flex;
       overflow: hidden;
@@ -126,113 +115,25 @@
       font-size: 13px;
       line-height: 1;
     }
-
     .badge span {
       padding: 9px 12px;
     }
-
     .badge span:first-child {
       color: #fff;
       background: #111827;
     }
-
     .badge.green span:last-child {
       color: #fff;
       background: var(--green);
     }
-
     .badge.blue span:last-child {
       color: #fff;
       background: var(--blue);
     }
-
     .badge.violet span:last-child {
       color: #fff;
       background: var(--violet);
     }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-top: 28px;
-    }
-
-    .card {
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 24px;
-      background: rgba(255, 255, 255, 0.72);
-      backdrop-filter: blur(18px);
-      box-shadow: 0 16px 48px rgba(15, 23, 42, 0.06);
-      transition: transform 0.2s ease, border-color 0.2s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-3px);
-      border-color: rgba(15, 23, 42, 0.2);
-    }
-
-    .icon {
-      width: 42px;
-      height: 42px;
-      display: grid;
-      place-items: center;
-      border-radius: 14px;
-      margin-bottom: 18px;
-      color: #fff;
-      font-size: 20px;
-    }
-
-    .icon.rules {
-      background: var(--orange);
-    }
-
-    .icon.scripts {
-      background: var(--blue);
-    }
-
-    .icon.modules {
-      background: var(--violet);
-    }
-
-    .card h2 {
-      margin: 0 0 8px;
-      font-size: 22px;
-      letter-spacing: -0.03em;
-    }
-
-    .card p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.7;
-      font-size: 15px;
-    }
-
-    .section {
-      margin-top: 18px;
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 24px;
-      background: rgba(255, 255, 255, 0.72);
-      backdrop-filter: blur(18px);
-    }
-
-    .section h2 {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 0 0 12px;
-      font-size: 20px;
-      letter-spacing: -0.03em;
-    }
-
-    .section p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.8;
-    }
-
     .actions {
       display: flex;
       justify-content: center;
@@ -240,7 +141,6 @@
       gap: 12px;
       margin-top: 28px;
     }
-
     .button {
       display: inline-flex;
       align-items: center;
@@ -252,53 +152,203 @@
       border: 1px solid var(--border);
       background: #fff;
       box-shadow: 0 12px 36px rgba(15, 23, 42, 0.06);
+      transition: transform 0.18s ease, border-color 0.18s ease;
     }
-
+    .button:hover {
+      transform: translateY(-2px);
+      border-color: rgba(15, 23, 42, 0.24);
+    }
     .button.primary {
       color: #fff;
       border-color: #0f172a;
       background: #0f172a;
     }
-
+    .nav-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 28px;
+    }
+    .nav-card {
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 24px;
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 16px 48px rgba(15, 23, 42, 0.06);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .nav-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(15, 23, 42, 0.2);
+    }
+    .icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      margin-bottom: 18px;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .icon.rules {
+      background: var(--orange);
+    }
+    .icon.scripts {
+      background: var(--blue);
+    }
+    .icon.modules {
+      background: var(--violet);
+    }
+    .nav-card h2 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      letter-spacing: -0.03em;
+    }
+    .nav-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+    .section {
+      margin-top: 18px;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 24px;
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 16px 48px rgba(15, 23, 42, 0.05);
+    }
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .section h2 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.04em;
+    }
+    .section-desc {
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+    .file-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .file {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.66);
+      transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    }
+    .file:hover {
+      transform: translateY(-2px);
+      border-color: rgba(15, 23, 42, 0.2);
+      background: rgba(255, 255, 255, 0.9);
+    }
+    .file-title {
+      display: block;
+      font-weight: 760;
+      letter-spacing: -0.02em;
+      word-break: break-word;
+    }
+    .file-path {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      word-break: break-all;
+    }
+    .file-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .mini {
+      height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .mini.raw {
+      color: #fff;
+      border-color: #0f172a;
+      background: #0f172a;
+    }
+    .mini:hover {
+      opacity: 0.82;
+    }
+    .note p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.8;
+    }
     footer {
       padding: 28px 0 0;
       text-align: center;
       color: var(--muted);
       font-size: 13px;
     }
-
-    @media (max-width: 720px) {
+    @media (max-width: 760px) {
       .page {
         width: min(100% - 24px, 1080px);
         padding-top: 28px;
       }
-
       .hero {
         border-radius: 26px;
         padding: 42px 20px;
       }
-
-      .grid {
+      .nav-grid,
+      .file-grid {
         grid-template-columns: 1fr;
       }
-
-      .card,
+      .nav-card,
       .section {
         border-radius: 22px;
         padding: 22px;
       }
-
+      .section-head {
+        display: block;
+      }
       .actions {
         flex-direction: column;
       }
-
       .button {
         width: 100%;
+      }
+      .file {
+        grid-template-columns: 1fr;
+      }
+      .file-actions {
+        width: 100%;
+      }
+      .mini {
+        flex: 1;
       }
     }
   </style>
 </head>
-
 <body>
   <main class="page">
     <section class="hero">
@@ -306,72 +356,256 @@
         <span class="dot"></span>
         Maintained for personal use
       </div>
-
-      <h1>ProxyKit</h1>
-
-      <p class="subtitle">
-        本人自用的代理配置集合。<br />
-        轻量整理规则、脚本与模块配置，按需维护。
-      </p>
-
-      <div class="badges">
-        <div class="badge green">
-          <span>updated</span>
-          <span>active</span>
-        </div>
-        <div class="badge blue">
-          <span>type</span>
-          <span>config</span>
-        </div>
-        <div class="badge violet">
-          <span>use</span>
-          <span>personal</span>
-        </div>
+  <h1>ProxyKit</h1>
+  <p class="subtitle">
+    本人自用的代理配置集合。<br />
+    轻量整理规则、脚本与模块配置，按需维护。
+  </p>
+  <div class="badges">
+    <div class="badge green">
+      <span>updated</span>
+      <span>active</span>
+    </div>
+    <div class="badge blue">
+      <span>type</span>
+      <span>config</span>
+    </div>
+    <div class="badge violet">
+      <span>use</span>
+      <span>personal</span>
+    </div>
+  </div>
+  <div class="actions">
+    <a class="button primary" href="https://github.com/Luke-Lab666/ProxyKit" target="_blank" rel="noopener">View Repository</a>
+    <a class="button" href="#resources">Browse Files</a>
+  </div>
+</section>
+<section class="nav-grid">
+  <a class="nav-card" href="#rules">
+    <div class="icon rules">R</div>
+    <h2>Rules</h2>
+    <p>分流规则、域名规则、IP 规则。</p>
+  </a>
+  <a class="nav-card" href="#scripts">
+    <div class="icon scripts">JS</div>
+    <h2>Scripts</h2>
+    <p>JavaScript 脚本配置。</p>
+  </a>
+  <a class="nav-card" href="#modules">
+    <div class="icon modules">M</div>
+    <h2>Modules</h2>
+    <p>Surge 模块与相关配置。</p>
+  </a>
+</section>
+<section id="resources" class="section">
+  <div class="section-head">
+    <div>
+      <h2>📦 Resources</h2>
+      <p class="section-desc">点击 Raw 直接打开原始文件链接，Copy 可复制订阅地址。</p>
+    </div>
+  </div>
+</section>
+<section id="rules" class="section">
+  <div class="section-head">
+    <div>
+      <h2>Rules</h2>
+      <p class="section-desc">Rule 目录下的分流规则。</p>
+    </div>
+  </div>
+  <div class="file-grid">
+    <div class="file">
+      <a href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/APNs" target="_blank" rel="noopener">
+        <span class="file-title">APNs</span>
+        <span class="file-path">Rule/APNs</span>
+      </a>
+      <div class="file-actions">
+        <a class="mini raw" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/APNs" target="_blank" rel="noopener">Raw</a>
+        <button class="mini" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/APNs">Copy</button>
       </div>
-
-      <div class="actions">
-        <a class="button primary" href="https://github.com/Luke-Lab666/ProxyKit">View Repository</a>
-        <a class="button" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/">Raw Base</a>
+    </div>
+    <div class="file">
+      <a href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/AppleCN" target="_blank" rel="noopener">
+        <span class="file-title">AppleCN</span>
+        <span class="file-path">Rule/AppleCN</span>
+      </a>
+      <div class="file-actions">
+        <a class="mini raw" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/AppleCN" target="_blank" rel="noopener">Raw</a>
+        <button class="mini" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/AppleCN">Copy</button>
       </div>
-    </section>
-
-    <section class="grid">
-      <article class="card">
-        <div class="icon rules">⌁</div>
-        <h2>Rules</h2>
-        <p>用于存放分流规则、域名规则、IP 规则等配置内容。</p>
-      </article>
-
-      <article class="card">
-        <div class="icon scripts">JS</div>
-        <h2>Scripts</h2>
-        <p>用于存放 JavaScript 脚本，按个人网络环境进行维护。</p>
-      </article>
-
-      <article class="card">
-        <div class="icon modules">◇</div>
-        <h2>Modules</h2>
-        <p>用于存放 Surge 模块与相关配置，方便快速引用。</p>
-      </article>
-    </section>
-
-    <section class="section">
-      <h2>🚀 Usage</h2>
-      <p>
-        打开对应文件，复制 <strong>Raw</strong> 链接，按需添加到 Surge、Loon、Egern 等客户端使用。
-      </p>
-    </section>
-
-    <section class="section">
+    </div>
+    <div class="file">
+      <a href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/AppleFull" target="_blank" rel="noopener">
+        <span class="file-title">AppleFull</span>
+        <span class="file-path">Rule/AppleFull</span>
+      </a>
+      <div class="file-actions">
+        <a class="mini raw" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/AppleFull" target="_blank" rel="noopener">Raw</a>
+        <button class="mini" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/AppleFull">Copy</button>
+      </div>
+    </div>
+    <div class="file">
+      <a href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Emby" target="_blank" rel="noopener">
+        <span class="file-title">Emby</span>
+        <span class="file-path">Rule/Emby</span>
+      </a>
+      <div class="file-actions">
+        <a class="mini raw" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Emby" target="_blank" rel="noopener">Raw</a>
+        <button class="mini" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Emby">Copy</button>
+      </div>
+    </div>
+    <div class="file">
+      <a href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/GeoIP" target="_blank" rel="noopener">
+        <span class="file-title">GeoIP</span>
+        <span class="file-path">Rule/GeoIP</span>
+      </a>
+      <div class="file-actions">
+        <a class="mini raw" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/GeoIP" target="_blank" rel="noopener">Raw</a>
+        <button class="mini" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/GeoIP">Copy</button>
+      </div>
+    </div>
+    <div class="file">
+      <a href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Net-Info-D" target="_blank" rel="noopener">
+        <span class="file-title">Net-Info-D</span>
+        <span class="file-path">Rule/Net-Info-D</span>
+      </a>
+      <div class="file-actions">
+        <a class="mini raw" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Net-Info-D" target="_blank" rel="noopener">Raw</a>
+        <button class="mini" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Net-Info-D">Copy</button>
+      </div>
+    </div>
+    <div class="file">
+      <a href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Net-Info-G" target="_blank" rel="noopener">
+        <span class="file-title">Net-Info-G</span>
+        <span class="file-path">Rule/Net-Info-G</span>
+      </a>
+      <div class="file-actions">
+        <a class="mini raw" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Net-Info-G" target="_blank" rel="noopener">Raw</a>
+        <button class="mini" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Net-Info-G">Copy</button>
+      </div>
+    </div>
+    <div class="file">
+      <a href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/NotGeoIP" target="_blank" rel="noopener">
+        <span class="file-title">NotGeoIP</span>
+        <span class="file-path">Rule/NotGeoIP</span>
+      </a>
+      <div class="file-actions">
+        <a class="mini raw" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/NotGeoIP" target="_blank" rel="noopener">Raw</a>
+        <button class="mini" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/NotGeoIP">Copy</button>
+      </div>
+    </div>
+    <div class="file">
+      <a href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/REJECT" target="_blank" rel="noopener">
+        <span class="file-title">REJECT</span>
+        <span class="file-path">Rule/REJECT</span>
+      </a>
+      <div class="file-actions">
+        <a class="mini raw" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/REJECT" target="_blank" rel="noopener">Raw</a>
+        <button class="mini" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/REJECT">Copy</button>
+      </div>
+    </div>
+    <div class="file">
+      <a href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Telegram" target="_blank" rel="noopener">
+        <span class="file-title">Telegram</span>
+        <span class="file-path">Rule/Telegram</span>
+      </a>
+      <div class="file-actions">
+        <a class="mini raw" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Telegram" target="_blank" rel="noopener">Raw</a>
+        <button class="mini" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Telegram">Copy</button>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="scripts" class="section">
+  <div class="section-head">
+    <div>
+      <h2>Scripts</h2>
+      <p class="section-desc">Scripts 目录下的 JavaScript 脚本。</p>
+    </div>
+  </div>
+  <div class="file-grid">
+    <div class="file">
+      <a href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Scripts/dns-lite.js" target="_blank" rel="noopener">
+        <span class="file-title">dns-lite.js</span>
+        <span class="file-path">Scripts/dns-lite.js</span>
+      </a>
+      <div class="file-actions">
+        <a class="mini raw" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Scripts/dns-lite.js" target="_blank" rel="noopener">Raw</a>
+        <button class="mini" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Scripts/dns-lite.js">Copy</button>
+      </div>
+    </div>
+    <div class="file">
+      <a href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Scripts/kill-connections-lite.js" target="_blank" rel="noopener">
+        <span class="file-title">kill-connections-lite.js</span>
+        <span class="file-path">Scripts/kill-connections-lite.js</span>
+      </a>
+      <div class="file-actions">
+        <a class="mini raw" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Scripts/kill-connections-lite.js" target="_blank" rel="noopener">Raw</a>
+        <button class="mini" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Scripts/kill-connections-lite.js">Copy</button>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="modules" class="section">
+  <div class="section-head">
+    <div>
+      <h2>Modules</h2>
+      <p class="section-desc">SurgeModule 目录下的模块配置。</p>
+    </div>
+  </div>
+  <div class="file-grid">
+    <div class="file">
+      <a href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/DNS%20Lite" target="_blank" rel="noopener">
+        <span class="file-title">DNS Lite</span>
+        <span class="file-path">SurgeModule/DNS Lite</span>
+      </a>
+      <div class="file-actions">
+        <a class="mini raw" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/DNS%20Lite" target="_blank" rel="noopener">Raw</a>
+        <button class="mini" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/DNS%20Lite">Copy</button>
+      </div>
+    </div>
+    <div class="file">
+      <a href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/kill-connections-lite.sgmodule" target="_blank" rel="noopener">
+        <span class="file-title">kill-connections-lite.sgmodule</span>
+        <span class="file-path">SurgeModule/kill-connections-lite.sgmodule</span>
+      </a>
+      <div class="file-actions">
+        <a class="mini raw" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/kill-connections-lite.sgmodule" target="_blank" rel="noopener">Raw</a>
+        <button class="mini" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/kill-connections-lite.sgmodule">Copy</button>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="section note">
+  <div class="section-head">
+    <div>
       <h2>📝 Note</h2>
-      <p>
-        本仓库主要用于个人网络环境的配置备份与日常维护。内容会根据实际使用情况调整，不作为通用方案推荐。
-      </p>
-    </section>
-
-    <footer>
-      ProxyKit · Personal proxy configuration toolkit.
-    </footer>
+    </div>
+  </div>
+  <p>
+    本仓库主要用于个人网络环境的配置备份与日常维护。内容会根据实际使用情况调整，不作为通用方案推荐。
+  </p>
+</section>
+<footer>
+  ProxyKit · Personal proxy configuration toolkit.
+</footer>
   </main>
+  <script>
+    const buttons = document.querySelectorAll("[data-copy]");
+    buttons.forEach((button) => {
+      button.addEventListener("click", async () => {
+        const text = button.getAttribute("data-copy");
+        const oldText = button.textContent;
+        try {
+          await navigator.clipboard.writeText(text);
+          button.textContent = "Copied";
+        } catch {
+          button.textContent = "Failed";
+        }
+        setTimeout(() => {
+          button.textContent = oldText;
+        }, 1200);
+      });
+    });
+  </script>
 </body>
 </html>
