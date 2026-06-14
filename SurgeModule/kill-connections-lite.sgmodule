@@ -1,8 +1,8 @@
 #!name=低内存打断连接
 #!desc=面板手动打断 + 网络变化自动打断；不读取 active requests，降低内存占用。
 #!category=Luke-Lab666
-#!arguments=PANEL_NAME:"低内存打断连接",EVENT_SCRIPT_NAME:"网络变化自动打断连接",EVENT_MODE:"wifi-change",EVENT_NOTIFY:1,COOLDOWN:5,DISMISS:2,FLUSH_DNS:1,TIMEOUT:10,ICON:"xmark.circle",ICON_COLOR:"%23C5424A"
-#!arguments-desc=PANEL_NAME: 面板名称\nEVENT_SCRIPT_NAME: 网络变化自动打断脚本名称\nEVENT_MODE: wifi-change 推荐；wifi-lost 只在 Wi-Fi 断开时打断；change 任意网络变化都打断\nEVENT_NOTIFY: 网络变化自动打断后是否通知，1 开启，0 关闭\nCOOLDOWN: 冷却时间，避免网络抖动连续触发，单位秒\nDISMISS: 通知自动消失秒数\nFLUSH_DNS: 打断前是否刷新 DNS，1 开启，0 关闭\nTIMEOUT: 脚本超时秒数\nICON: 面板图标\nICON_COLOR: 图标颜色，默认 %23C5424A，等于 #C5424A
+#!arguments=PANEL_NAME:"低内存打断连接",EVENT_NOTIFY:1,COOLDOWN:5,DISMISS:2,FLUSH_DNS:1,TIMEOUT:10,ICON:"xmark.circle",ICON_COLOR:"%23C5424A"
+#!arguments-desc=PANEL_NAME: 面板名称\nEVENT_MODE: wifi-change 推荐；wifi-lost 只在 Wi-Fi 断开时打断；change 任意网络变化都打断\nEVENT_NOTIFY: 网络变化自动打断后是否通知，1 开启，0 关闭\nCOOLDOWN: 冷却时间，避免网络抖动连续触发，单位秒\nDISMISS: 通知自动消失秒数\nFLUSH_DNS: 打断前是否刷新 DNS，1 开启，0 关闭\nTIMEOUT: 脚本超时秒数\nICON: 面板图标\nICON_COLOR: 图标颜色，默认 %23C5424A，等于 #C5424A
 
 [Script]
 {{{PANEL_NAME}}} = type=generic,timeout={{{TIMEOUT}}},control-api=1,script-path=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/refs/heads/main/Scripts/kill-connections-lite.js,argument="TYPE=PANEL&DISMISS={{{DISMISS}}}&FLUSH_DNS={{{FLUSH_DNS}}}&ICON={{{ICON}}}&ICON_COLOR={{{ICON_COLOR}}}",engine=jsc
