@@ -18,10 +18,25 @@ ProxyKit
 <br>
 <hr>
 <br>
-
-Rules	Scripts	Modules
-分流规则	脚本配置	模块配置
-
+<table width="100%">
+  <tr>
+    <td width="33%" align="center">
+      <strong>Rules</strong>
+      <br>
+      <sub>分流规则</sub>
+    </td>
+    <td width="33%" align="center">
+      <strong>Scripts</strong>
+      <br>
+      <sub>脚本配置</sub>
+    </td>
+    <td width="33%" align="center">
+      <strong>Modules</strong>
+      <br>
+      <sub>模块配置</sub>
+    </td>
+  </tr>
+</table>
 <br>
 <hr>
 
