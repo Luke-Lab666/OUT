@@ -3,16 +3,16 @@
 ProxyKit
 
 <p>
-  <b>Personal proxy configuration toolkit.</b>
+  <b>Rules · Scripts · Modules</b>
 </p>
 <p>
-  <img src="https://img.shields.io/github/last-commit/Luke-Lab666/ProxyKit?style=for-the-badge&label=Updated&color=111111" />
-  <img src="https://img.shields.io/github/repo-size/Luke-Lab666/ProxyKit?style=for-the-badge&label=Size&color=111111" />
-  <img src="https://img.shields.io/badge/Use-Personal%20Only-111111?style=for-the-badge" />
+  本人自用的代理配置集合。<br>
+  轻量整理，按需维护。
 </p>
 <p>
-  本人自用代理配置仓库。<br>
-  用于存放规则、脚本与模块配置。
+  <img src="https://img.shields.io/github/last-commit/Luke-Lab666/ProxyKit?style=flat-square&label=updated&color=0f172a" />
+  <img src="https://img.shields.io/github/repo-size/Luke-Lab666/ProxyKit?style=flat-square&label=size&color=0f172a" />
+  <img src="https://img.shields.io/badge/personal-config-0f172a?style=flat-square" />
 </p>
 </div>
 
@@ -20,39 +20,37 @@ ProxyKit
 
 <table>
   <tr>
-    <td width="33%" align="center">
-      <b>Rules</b>
+    <td align="center" width="33%">
+      <b>Rule</b>
       <br>
-      <sub>分流规则 / 域名规则 / IP 规则</sub>
+      <sub>分流规则</sub>
     </td>
-    <td width="33%" align="center">
+    <td align="center" width="33%">
       <b>Scripts</b>
       <br>
-      <sub>JavaScript 脚本配置</sub>
+      <sub>脚本配置</sub>
     </td>
-    <td width="33%" align="center">
-      <b>Modules</b>
+    <td align="center" width="33%">
+      <b>SurgeModule</b>
       <br>
-      <sub>Surge 模块与相关配置</sub>
+      <sub>模块配置</sub>
     </td>
   </tr>
 </table>
 
 Usage
 
-复制对应文件的 Raw 链接，按需添加到 Surge、Loon、Egern 等客户端使用。
+打开对应文件，复制 Raw 链接，按需添加到客户端使用。
 
-Notice
+Note
 
-本仓库仅为本人自用配置备份，不作为通用方案推荐。
-
-配置内容会根据个人网络环境随时调整，不保证适用于其他设备、地区或网络环境。
-第三方引用后产生的问题需自行承担。
+本仓库主要用于个人网络环境的配置备份与日常维护。
+内容会根据实际使用情况调整，不作为通用方案推荐。
 
 ⸻
 
 <div align="center">
 
-For personal use only.
+Maintained for personal use.
 
 </div>
