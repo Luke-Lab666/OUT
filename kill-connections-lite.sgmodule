@@ -1,6 +1,6 @@
 #!name=低内存打断连接
 #!desc=仅保留 Surge 面板按钮打断连接；不统计活跃请求，避免 active requests 列表导致高内存。
-#!category=Surge
+#!category=Luke-Lab666
 #!arguments=PANEL_NAME:低内存打断连接,DISMISS:2,FLUSH_DNS:1,ICON:xmark.circle,ICON-COLOR:#C5424A
 #!arguments-desc=PANEL_NAME: 面板名称\nDISMISS: 通知自动消失秒数\nFLUSH_DNS: 打断前是否刷新 DNS，1 开启，0 关闭\nICON: 面板图标\nICON-COLOR: 图标颜色
 
