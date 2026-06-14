@@ -1,11 +1,11 @@
 #!name=DNS Lite
-#!desc=轻量 DoH DNS 脚本；支持 4 个自定义 Host，默认不启用。改写自一佬的模块：https://raw.githubusercontent.com/xream/scripts/main/surge/modules/dns/dns.sgmodule
+#!desc=轻量 DoH DNS 脚本；支持 4 个自定义 Host，DoH 请求可指定策略，默认直连。
 #!category=Luke-Lab666
-#!arguments=HOST1:"disabled.invalid",HOST2:"disabled.invalid",HOST3:"disabled.invalid",HOST4:"disabled.invalid",type:"prefer-v4",doh:"https://8.8.4.4/dns-query",ttl:60,timeout:2,edns:"0",fallback:1,log:0,policy:0,max_doh:2,min_ttl:1,max_ttl:600
-#!arguments-desc=HOST1-HOST4: 要接管解析的 Host；默认 disabled.invalid 等于不使用；例如 * 为全部，github.com 为主域，*.github.com 为子域\ntype: dual, v4-only, v6-only, prefer-v4, prefer-v6\ndoh: DoH 地址，多个用英文逗号分隔\nttl: 默认 TTL，单位秒\ntimeout: DoH 请求超时，单位秒\nedns: 填 IP 开启 ECS；填 auto 读取 lastNetworkInfoEvent.CN_IP；填 0/off/none 关闭 ECS\nfallback: 失败后回退 Surge 默认 DNS，1 开启，0 关闭\nlog: 是否打印日志，1 开启，0 关闭\npolicy: 指定 DoH 请求策略组，0 为不指定\nmax_doh: 最多同时竞速几个 DoH，0 为全部\nmin_ttl: TTL 下限，单位秒\nmax_ttl: TTL 上限，单位秒
+#!arguments=HOST1:"disabled.invalid",HOST2:"disabled.invalid",HOST3:"disabled.invalid",HOST4:"disabled.invalid",type:"prefer-v4",doh:"https://8.8.4.4/dns-query",ttl:60,timeout:3,edns:"0",fallback:1,log:0,policy:"DIRECT",max_doh:2,min_ttl:1,max_ttl:600
+#!arguments-desc=HOST1-HOST4: 要接管解析的 Host；默认 disabled.invalid 等于不使用；例如 * 为全部，github.com 为主域，*.github.com 为子域\ntype: dual, v4-only, v6-only, prefer-v4, prefer-v6\ndoh: DoH 地址，多个用英文逗号分隔\nttl: 默认 TTL，单位秒\ntimeout: DoH 请求超时，单位秒\nedns: 填 IP 开启 ECS；填 auto 读取 lastNetworkInfoEvent.CN_IP；填 0/off/none 关闭 ECS\nfallback: 失败后回退 Surge 默认 DNS，1 开启，0 关闭\nlog: 是否打印日志，1 开启，0 关闭\npolicy: DoH 请求使用的策略；DIRECT 为直连，0 为不指定，也可以填你的策略组名\nmax_doh: 最多同时竞速几个 DoH，0 为全部\nmin_ttl: TTL 下限，单位秒\nmax_ttl: TTL 上限，单位秒
 
 [Script]
-DNS Lite = type=dns,script-path=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/refs/heads/main/Scripts/dns-lite.js,argument="type={{{type}}}&doh={{{doh}}}&ttl={{{ttl}}}&timeout={{{timeout}}}&edns={{{edns}}}&fallback={{{fallback}}}&log={{{log}}}&policy={{{policy}}}&max_doh={{{max_doh}}}&min_ttl={{{min_ttl}}}&max_ttl={{{max_ttl}}}",engine=jsc
+DNS Lite = type=dns,script-path=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/refs/heads/main/Scripts/dns-lite.js,argument="type={{{type}}}&doh={{{doh}}}&ttl={{{ttl}}}&timeout={{{timeout}}}&edns={{{edns}}}&fallback={{{fallback}}}&log={{{log}}}&policy={{{policy}}}&max_doh={{{max_doh}}}&min_ttl={{{min_ttl}}}&max_ttl={{{max_ttl}}}",ability=http-client-policy,engine=jsc
 
 [Host]
 {{{HOST1}}} = script:DNS Lite
