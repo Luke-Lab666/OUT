@@ -1,0 +1,93 @@
+name: Update Pages Data
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "Rule/**"
+      - "Scripts/**"
+      - "SurgeModule/**"
+      - ".github/workflows/update-pages-data.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate files.json
+        run: |
+          mkdir -p docs
+
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+
+          categories = [
+              {
+                  "title": "Rules",
+                  "desc": "分流规则、域名规则、IP 规则。",
+                  "icon": "R",
+                  "iconClass": "rules",
+                  "folder": "Rule"
+              },
+              {
+                  "title": "Scripts",
+                  "desc": "JavaScript 脚本配置。",
+                  "icon": "JS",
+                  "iconClass": "scripts",
+                  "folder": "Scripts"
+              },
+              {
+                  "title": "Modules",
+                  "desc": "Surge 模块与相关配置。",
+                  "icon": "M",
+                  "iconClass": "modules",
+                  "folder": "SurgeModule"
+              }
+          ]
+
+          data = []
+
+          for category in categories:
+              folder = Path(category["folder"])
+              files = []
+
+              if folder.exists():
+                  for item in sorted(folder.rglob("*")):
+                      if item.is_file():
+                          files.append({
+                              "name": item.name,
+                              "path": item.as_posix()
+                          })
+
+              data.append({
+                  **category,
+                  "files": files
+              })
+
+          Path("docs/files.json").write_text(
+              json.dumps(data, ensure_ascii=False, indent=2),
+              encoding="utf-8"
+          )
+          PY
+
+      - name: Commit updated files.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add docs/files.json
+
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git commit -m "Update Pages file data"
+            git push
+          fi
