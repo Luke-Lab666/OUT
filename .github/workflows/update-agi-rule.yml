@@ -1,0 +1,305 @@
+name: Update AGI Rule
+
+on:
+schedule:
+# 每天 20:30 UTC 运行一次，大约是北京时间 04:30
+- cron: “30 20 * * *”
+
+workflow_dispatch:
+
+permissions:
+contents: write
+
+concurrency:
+group: update-agi-rule
+cancel-in-progress: true
+
+jobs:
+update:
+runs-on: ubuntu-latest
+
+steps:
+  - name: Checkout repository
+    uses: actions/checkout@v4
+  - name: Generate AGI rule
+    run: |
+      mkdir -p Rule
+      python3 <<'PY'
+      import re
+      import json
+      import datetime
+      from pathlib import Path
+      from urllib.request import Request, urlopen
+      from urllib.error import URLError, HTTPError
+      OUTPUT = Path("Rule/AGI")
+      UPSTREAMS = [
+          "https://raw.githubusercontent.com/ConnersHua/RuleGo/master/Surge/Ruleset/Extra/AI.list",
+          "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/OpenAI/OpenAI.list",
+          "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Claude/Claude.list",
+          "https://ruleset.skk.moe/List/non_ip/ai.conf",
+      ]
+      # 海外主流 AI / AGI 服务种子域名
+      SEED_RULES = [
+          # OpenAI / ChatGPT / Sora
+          ("DOMAIN-SUFFIX", "openai.com"),
+          ("DOMAIN-SUFFIX", "chatgpt.com"),
+          ("DOMAIN-SUFFIX", "oaistatic.com"),
+          ("DOMAIN-SUFFIX", "oaiusercontent.com"),
+          ("DOMAIN-SUFFIX", "sora.com"),
+          ("DOMAIN-SUFFIX", "chat.com"),
+          # Anthropic / Claude
+          ("DOMAIN-SUFFIX", "anthropic.com"),
+          ("DOMAIN-SUFFIX", "claude.ai"),
+          ("DOMAIN-SUFFIX", "claude.com"),
+          ("DOMAIN-SUFFIX", "clau.de"),
+          ("DOMAIN-SUFFIX", "claudeusercontent.com"),
+          # Google Gemini / DeepMind / AI Studio / NotebookLM
+          ("DOMAIN-SUFFIX", "gemini.google.com"),
+          ("DOMAIN-SUFFIX", "gemini.google"),
+          ("DOMAIN-SUFFIX", "generativeai.google"),
+          ("DOMAIN-SUFFIX", "deepmind.com"),
+          ("DOMAIN-SUFFIX", "deepmind.google"),
+          ("DOMAIN-SUFFIX", "notebooklm.google"),
+          ("DOMAIN-SUFFIX", "notebooklm.google.com"),
+          ("DOMAIN", "ai.google.dev"),
+          ("DOMAIN", "aistudio.google.com"),
+          ("DOMAIN", "makersuite.google.com"),
+          ("DOMAIN", "generativelanguage.googleapis.com"),
+          ("DOMAIN", "geller-pa.googleapis.com"),
+          ("DOMAIN", "proactivebackend-pa.googleapis.com"),
+          # xAI / Grok
+          ("DOMAIN-SUFFIX", "x.ai"),
+          ("DOMAIN-SUFFIX", "grok.com"),
+          ("DOMAIN-SUFFIX", "g.ai"),
+          # Perplexity
+          ("DOMAIN-SUFFIX", "perplexity.ai"),
+          ("DOMAIN-SUFFIX", "pplx.ai"),
+          # OpenRouter / Poe / Groq / Mistral
+          ("DOMAIN-SUFFIX", "openrouter.ai"),
+          ("DOMAIN-SUFFIX", "poe.com"),
+          ("DOMAIN-SUFFIX", "groq.com"),
+          ("DOMAIN-SUFFIX", "mistral.ai"),
+          # Meta AI
+          ("DOMAIN-SUFFIX", "meta.ai"),
+          ("DOMAIN", "imagine.meta.com"),
+          # Hugging Face / Replicate
+          ("DOMAIN-SUFFIX", "huggingface.co"),
+          ("DOMAIN-SUFFIX", "hf.co"),
+          ("DOMAIN-SUFFIX", "replicate.com"),
+          ("DOMAIN-SUFFIX", "replicate.delivery"),
+          # AI Coding
+          ("DOMAIN-SUFFIX", "cursor.com"),
+          ("DOMAIN-SUFFIX", "cursor.sh"),
+          ("DOMAIN-SUFFIX", "cursorapi.com"),
+          ("DOMAIN-SUFFIX", "cursor-cdn.com"),
+          ("DOMAIN-SUFFIX", "zed.dev"),
+          ("DOMAIN-SUFFIX", "githubcopilot.com"),
+          ("DOMAIN", "copilot.microsoft.com"),
+          ("DOMAIN", "copilot.cloud.microsoft"),
+          # Other mainstream AI tools
+          ("DOMAIN-SUFFIX", "character.ai"),
+          ("DOMAIN-SUFFIX", "runwayml.com"),
+          ("DOMAIN-SUFFIX", "elevenlabs.io"),
+          ("DOMAIN-SUFFIX", "phind.com"),
+          ("DOMAIN-SUFFIX", "you.com"),
+      ]
+      ALLOW_TYPES = {
+          "DOMAIN",
+          "DOMAIN-SUFFIX",
+      }
+      # 明确排除中国大陆 AI / 云厂商 / 国内产品相关域名关键词
+      CN_KEYWORDS = [
+          "baidu",
+          "wenxin",
+          "yiyan",
+          "qianfan",
+          "aliyun",
+          "alibaba",
+          "dashscope",
+          "tongyi",
+          "tencent",
+          "hunyuan",
+          "volcengine",
+          "doubao",
+          "bytedance",
+          "byteoversea",
+          "coze",
+          "zhipu",
+          "bigmodel",
+          "moonshot",
+          "kimi",
+          "deepseek",
+          "minimax",
+          "abab",
+          "baichuan",
+          "modelscope",
+          "siliconflow",
+          "sensenova",
+          "xfyun",
+          "iflytek",
+          "stepfun",
+          "01.ai",
+          "lingyiwanwu",
+          "tiangong",
+          "360",
+          "dify.cn",
+      ]
+      CN_SUFFIXES = [
+          ".cn",
+          ".com.cn",
+          ".net.cn",
+          ".org.cn",
+          ".gov.cn",
+      ]
+      # 过滤掉太泛的登录、统计、支付、监控、CDN 依赖域名
+      # 这些不是 AGI 服务本体，放进规则容易误伤。
+      GENERIC_DROP_SUFFIXES = [
+          "auth0.com",
+          "stripe.com",
+          "sentry.io",
+          "segment.io",
+          "intercom.io",
+          "intercomcdn.com",
+          "launchdarkly.com",
+          "algolia.net",
+          "identrust.com",
+          "observeit.net",
+          "usefathom.com",
+          "statsigapi.net",
+          "livekit.cloud",
+          "arkoselabs.com",
+          "cloudflareinsights.com",
+      ]
+      GENERIC_DROP_EXACT = [
+          "www.bing.com",
+          "storage.googleapis.com",
+          "apis.google.com",
+          "static.cloudflareinsights.com",
+          "cdn.usefathom.com",
+          "browser-intake-datadoghq.com",
+          "browser-intake-us5-datadoghq.com",
+          "api.statsig.com",
+          "events.statsigapi.net",
+          "invoice.stripe.com",
+          "pplx-res.cloudinary.com",
+      ]
+      DOMAIN_RE = re.compile(r"^[a-z0-9][a-z0-9.-]*[a-z0-9]$")
+      def fetch_text(url):
+          try:
+              req = Request(
+                  url,
+                  headers={
+                      "User-Agent": "Luke-Lab666-ProxyKit-Updater/1.0",
+                      "Accept": "text/plain,*/*",
+                  },
+              )
+              with urlopen(req, timeout=20) as response:
+                  return response.read().decode("utf-8", errors="ignore")
+          except (URLError, HTTPError, TimeoutError) as error:
+              print(f"Skip upstream: {url} ({error})")
+              return ""
+      def normalize_domain(value):
+          domain = value.strip().lower()
+          domain = domain.removeprefix(".").rstrip(".")
+          return domain
+      def parse_rule_line(line):
+          raw = line.strip()
+          if not raw or raw.startswith("#"):
+              return None
+          if "#" in raw:
+              raw = raw.split("#", 1)[0].strip()
+          raw = raw.replace("，", ",")
+          parts = [part.strip() for part in raw.split(",") if part.strip()]
+          if len(parts) < 2:
+              return None
+          rule_type = parts[0].upper()
+          domain = normalize_domain(parts[1])
+          if rule_type not in ALLOW_TYPES:
+              return None
+          if not domain or "." not in domain:
+              return None
+          if not DOMAIN_RE.match(domain):
+              return None
+          return rule_type, domain
+      def should_drop(rule_type, domain):
+          if any(domain.endswith(suffix) for suffix in CN_SUFFIXES):
+              return True
+          if any(keyword in domain for keyword in CN_KEYWORDS):
+              return True
+          if domain in GENERIC_DROP_EXACT:
+              return True
+          if any(domain == suffix or domain.endswith("." + suffix) for suffix in GENERIC_DROP_SUFFIXES):
+              return True
+          # 避免收录过宽大域名
+          if rule_type == "DOMAIN-SUFFIX" and domain in {
+              "google.com",
+              "googleapis.com",
+              "microsoft.com",
+              "github.com",
+              "apple.com",
+              "icloud.com",
+              "bing.com",
+              "cloudflare.com",
+              "cloudfront.net",
+              "azureedge.net",
+          }:
+              return True
+          return False
+      def is_covered_by_suffix(domain, suffixes):
+          return any(domain == suffix or domain.endswith("." + suffix) for suffix in suffixes)
+      rules = set(SEED_RULES)
+      for url in UPSTREAMS:
+          text = fetch_text(url)
+          for line in text.splitlines():
+              rule = parse_rule_line(line)
+              if rule:
+                  rules.add(rule)
+      filtered = set()
+      for rule_type, domain in rules:
+          if not should_drop(rule_type, domain):
+              filtered.add((rule_type, domain))
+      suffixes = {
+          domain
+          for rule_type, domain in filtered
+          if rule_type == "DOMAIN-SUFFIX"
+      }
+      final_rules = set()
+      for rule_type, domain in filtered:
+          if rule_type == "DOMAIN" and is_covered_by_suffix(domain, suffixes):
+              continue
+          final_rules.add((rule_type, domain))
+      sorted_rules = sorted(
+          final_rules,
+          key=lambda item: (item[0], item[1])
+      )
+      now = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+      header = [
+          "# NAME: AGI",
+          "# AUTHOR: Luke-Lab666",
+          "# REPO: https://github.com/Luke-Lab666/ProxyKit",
+          f"# UPDATED: {now}",
+          "# DESC: Non-mainland China AI / AGI related domains for Surge.",
+          "# FORMAT: DOMAIN / DOMAIN-SUFFIX",
+          "",
+      ]
+      body = [
+          f"{rule_type},{domain}"
+          for rule_type, domain in sorted_rules
+      ]
+      OUTPUT.write_text(
+          "\n".join(header + body) + "\n",
+          encoding="utf-8"
+      )
+      print(f"Generated {OUTPUT} with {len(body)} rules.")
+      PY
+  - name: Commit changes
+    run: |
+      git config user.name "github-actions[bot]"
+      git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      git add Rule/AGI
+      if git diff --cached --quiet; then
+        echo "No changes."
+      else
+        git commit -m "Update AGI rule"
+        git push
+      fi
