@@ -1,0 +1,406 @@
+name: Update CN GeoIP
+
+on:
+  schedule:
+    # 每天 22:10 UTC 运行一次，大约北京时间 06:10
+    - cron: "10 22 * * *"
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: update-cn-geoip
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+
+      - name: Generate CN CIDR list
+        run: |
+          mkdir -p Rule build
+
+          python3 <<'PY'
+          import re
+          import json
+          import ipaddress
+          import datetime
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+          from urllib.error import URLError, HTTPError
+
+          REPO = "https://github.com/Luke-Lab666/ProxyKit"
+
+          CIDR_SOURCES = [
+              "https://china-operator-ip.yfgao.com/china46.txt",
+              "https://gaoyifan.github.io/china-operator-ip/china46.txt",
+              "https://raw.githubusercontent.com/Hackl0us/GeoIP2-CN/release/CN-ip-cidr.txt",
+              "https://raw.githubusercontent.com/carrnot/china-ip-list/release/ip.txt",
+          ]
+
+          APNIC_SOURCE = "https://ftp.apnic.net/stats/apnic/delegated-apnic-latest"
+
+          CIDR_RE = re.compile(
+              r"(?<![0-9a-fA-F:.])("
+              r"(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}"
+              r"|"
+              r"(?:[0-9a-fA-F:]+:+[0-9a-fA-F:]*)/\d{1,3}"
+              r")(?![0-9a-fA-F:.])"
+          )
+
+          def fetch_text(url):
+              try:
+                  request = Request(
+                      url,
+                      headers={
+                          "User-Agent": "Luke-Lab666-ProxyKit-CN-GeoIP-Updater/1.0",
+                          "Accept": "text/plain,*/*",
+                      },
+                  )
+
+                  with urlopen(request, timeout=35) as response:
+                      return response.read().decode("utf-8", errors="ignore")
+              except (URLError, HTTPError, TimeoutError) as error:
+                  print(f"Skip source: {url} ({error})")
+                  return ""
+
+          def is_public_network(network):
+              if network.prefixlen == 0:
+                  return False
+
+              return not any([
+                  network.is_private,
+                  network.is_loopback,
+                  network.is_link_local,
+                  network.is_multicast,
+                  network.is_reserved,
+                  network.is_unspecified,
+              ])
+
+          def add_network(networks, value):
+              value = value.strip()
+
+              try:
+                  network = ipaddress.ip_network(value, strict=False)
+              except ValueError:
+                  return
+
+              if not is_public_network(network):
+                  return
+
+              networks.add(network)
+
+          def parse_cidr_text(networks, text):
+              for match in CIDR_RE.finditer(text):
+                  add_network(networks, match.group(1))
+
+          def parse_apnic(networks, text):
+              for line in text.splitlines():
+                  line = line.strip()
+
+                  if not line or line.startswith("#"):
+                      continue
+
+                  parts = line.split("|")
+
+                  if len(parts) < 7:
+                      continue
+
+                  registry, country, record_type, start, value, date, status = parts[:7]
+
+                  if country != "CN" or status not in {"allocated", "assigned"}:
+                      continue
+
+                  try:
+                      if record_type == "ipv4":
+                          count = int(value)
+                          start_ip = ipaddress.IPv4Address(start)
+                          end_ip = ipaddress.IPv4Address(int(start_ip) + count - 1)
+
+                          for network in ipaddress.summarize_address_range(start_ip, end_ip):
+                              if is_public_network(network):
+                                  networks.add(network)
+
+                      elif record_type == "ipv6":
+                          prefix = int(value)
+                          network = ipaddress.IPv6Network(f"{start}/{prefix}", strict=False)
+
+                          if is_public_network(network):
+                              networks.add(network)
+                  except ValueError:
+                      continue
+
+          def collapse_and_sort(networks):
+              ipv4 = [network for network in networks if network.version == 4]
+              ipv6 = [network for network in networks if network.version == 6]
+
+              collapsed_v4 = list(ipaddress.collapse_addresses(ipv4))
+              collapsed_v6 = list(ipaddress.collapse_addresses(ipv6))
+
+              return sorted(
+                  collapsed_v4 + collapsed_v6,
+                  key=lambda network: (
+                      network.version,
+                      int(network.network_address),
+                      network.prefixlen,
+                  ),
+              )
+
+          networks = set()
+          source_status = []
+
+          for source in CIDR_SOURCES:
+              text = fetch_text(source)
+              before = len(networks)
+
+              if text:
+                  parse_cidr_text(networks, text)
+
+              source_status.append({
+                  "source": source,
+                  "added": len(networks) - before,
+                  "ok": bool(text),
+              })
+
+          apnic_text = fetch_text(APNIC_SOURCE)
+          before = len(networks)
+
+          if apnic_text:
+              parse_apnic(networks, apnic_text)
+
+          source_status.append({
+              "source": APNIC_SOURCE,
+              "added": len(networks) - before,
+              "ok": bool(apnic_text),
+          })
+
+          collapsed = collapse_and_sort(networks)
+
+          if len(collapsed) < 1000:
+              raise SystemExit(f"Too few CN networks after merge: {len(collapsed)}. Abort to avoid bad output.")
+
+          ipv4_count = sum(1 for network in collapsed if network.version == 4)
+          ipv6_count = sum(1 for network in collapsed if network.version == 6)
+          now = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+
+          cidr_lines = [str(network) for network in collapsed]
+
+          Path("build/cn-cidr.txt").write_text(
+              "\n".join(cidr_lines) + "\n",
+              encoding="utf-8",
+          )
+
+          rule_header = [
+              "# NAME: CN",
+              "# AUTHOR: Luke-Lab666",
+              f"# REPO: {REPO}",
+              f"# UPDATED: {now}",
+              "# DESC: CN-only public IP CIDR list. Deduplicated and collapsed.",
+              f"# COUNT: total={len(collapsed)}, ipv4={ipv4_count}, ipv6={ipv6_count}",
+              "# FORMAT: Surge Rule Set",
+              "# SOURCE:",
+          ]
+
+          for item in source_status:
+              ok = "ok" if item["ok"] else "failed"
+              rule_header.append(f"#   - {item['source']} [{ok}, +{item['added']}]")
+
+          rule_header.append("")
+
+          rule_body = []
+
+          for network in collapsed:
+              if network.version == 4:
+                  rule_body.append(f"IP-CIDR,{network},no-resolve")
+              else:
+                  rule_body.append(f"IP-CIDR6,{network},no-resolve")
+
+          Path("Rule/CN").write_text(
+              "\n".join(rule_header + rule_body) + "\n",
+              encoding="utf-8",
+          )
+
+          metadata = {
+              "updated": now,
+              "count": {
+                  "total": len(collapsed),
+                  "ipv4": ipv4_count,
+                  "ipv6": ipv6_count,
+              },
+              "sources": source_status,
+          }
+
+          Path("build/cn-meta.json").write_text(
+              json.dumps(metadata, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+
+          print(f"CN networks: total={len(collapsed)}, ipv4={ipv4_count}, ipv6={ipv6_count}")
+          PY
+
+      - name: Build CN-only MMDB
+        run: |
+          mkdir -p build/mmdb-writer Rule
+
+          cd build/mmdb-writer
+
+          go mod init cn-mmdb-writer
+          go get github.com/maxmind/mmdbwriter@latest
+
+          cat > main.go <<'GO'
+          package main
+
+          import (
+            "bufio"
+            "fmt"
+            "net"
+            "os"
+            "strings"
+
+            "github.com/maxmind/mmdbwriter"
+            "github.com/maxmind/mmdbwriter/mmdbtype"
+          )
+
+          func main() {
+            input := "../cn-cidr.txt"
+            output := "../../Rule/GeoIP-CN.mmdb"
+
+            writer, err := mmdbwriter.New(mmdbwriter.Options{
+              DatabaseType: "GeoIP2-Country",
+              Description: map[string]string{
+                "en": "CN-only GeoIP2 Country database generated by Luke-Lab666 ProxyKit",
+                "zh-CN": "仅包含中国大陆 IP 地址段的 GeoIP2 Country 数据库",
+              },
+              IPVersion: 6,
+              RecordSize: 24,
+            })
+
+            if err != nil {
+              panic(err)
+            }
+
+            record := mmdbtype.Map{
+              "continent": mmdbtype.Map{
+                "code": mmdbtype.String("AS"),
+                "names": mmdbtype.Map{
+                  "en": mmdbtype.String("Asia"),
+                  "zh-CN": mmdbtype.String("亚洲"),
+                },
+              },
+              "country": mmdbtype.Map{
+                "iso_code": mmdbtype.String("CN"),
+                "names": mmdbtype.Map{
+                  "en": mmdbtype.String("China"),
+                  "zh-CN": mmdbtype.String("中国"),
+                },
+              },
+              "registered_country": mmdbtype.Map{
+                "iso_code": mmdbtype.String("CN"),
+                "names": mmdbtype.Map{
+                  "en": mmdbtype.String("China"),
+                  "zh-CN": mmdbtype.String("中国"),
+                },
+              },
+            }
+
+            file, err := os.Open(input)
+            if err != nil {
+              panic(err)
+            }
+            defer file.Close()
+
+            scanner := bufio.NewScanner(file)
+            count := 0
+
+            for scanner.Scan() {
+              line := strings.TrimSpace(scanner.Text())
+
+              if line == "" || strings.HasPrefix(line, "#") {
+                continue
+              }
+
+              _, network, err := net.ParseCIDR(line)
+              if err != nil {
+                panic(err)
+              }
+
+              if err := writer.Insert(network, record); err != nil {
+                panic(err)
+              }
+
+              count++
+            }
+
+            if err := scanner.Err(); err != nil {
+              panic(err)
+            }
+
+            if count < 1000 {
+              panic(fmt.Sprintf("too few networks inserted: %d", count))
+            }
+
+            out, err := os.Create(output)
+            if err != nil {
+              panic(err)
+            }
+            defer out.Close()
+
+            if _, err := writer.WriteTo(out); err != nil {
+              panic(err)
+            }
+
+            fmt.Printf("Generated %s with %d networks\n", output, count)
+          }
+          GO
+
+          go run main.go
+
+      - name: Check generated files
+        run: |
+          ls -lh Rule/CN Rule/GeoIP-CN.mmdb build/cn-cidr.txt build/cn-meta.json
+
+          test -s Rule/CN
+          test -s Rule/GeoIP-CN.mmdb
+
+          echo "Preview Rule/CN:"
+          head -n 20 Rule/CN
+
+      - name: Commit changes
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add Rule/CN Rule/GeoIP-CN.mmdb
+
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes."
+          else
+            git commit -m "Update CN GeoIP"
+            git pull --rebase
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Trigger Pages deployment
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run pages.yml --ref main || echo "Pages workflow dispatch skipped."
