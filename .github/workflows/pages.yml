@@ -1,0 +1,133 @@
+name: Deploy Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+      - "Rule/**"
+      - "Scripts/**"
+      - "SurgeModule/**"
+      - ".github/workflows/pages.yml"
+
+  workflow_dispatch:
+
+  workflow_run:
+    workflows:
+      - Update AGI Rule
+    types:
+      - completed
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate files.json
+        run: |
+          mkdir -p docs
+
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+
+          categories = [
+              {
+                  "title": "Rules",
+                  "desc": "分流规则、域名规则、IP 规则。",
+                  "icon": "R",
+                  "iconClass": "rules",
+                  "folder": "Rule"
+              },
+              {
+                  "title": "Scripts",
+                  "desc": "JavaScript 脚本配置。",
+                  "icon": "JS",
+                  "iconClass": "scripts",
+                  "folder": "Scripts"
+              },
+              {
+                  "title": "Modules",
+                  "desc": "Surge 模块与相关配置。",
+                  "icon": "M",
+                  "iconClass": "modules",
+                  "folder": "SurgeModule"
+              }
+          ]
+
+          output = []
+
+          for category in categories:
+              folder = Path(category["folder"])
+              files = []
+
+              if folder.exists():
+                  for item in sorted(folder.rglob("*")):
+                      if item.is_file():
+                          files.append({
+                              "name": item.name,
+                              "path": item.as_posix()
+                          })
+
+              output.append({
+                  "title": category["title"],
+                  "desc": category["desc"],
+                  "icon": category["icon"],
+                  "iconClass": category["iconClass"],
+                  "folder": category["folder"],
+                  "files": files
+              })
+
+          Path("docs/files.json").write_text(
+              json.dumps(output, ensure_ascii=False, indent=2),
+              encoding="utf-8"
+          )
+          PY
+
+          touch docs/.nojekyll
+
+      - name: Check Pages files
+        run: |
+          echo "Generated files:"
+          find docs -maxdepth 2 -type f | sort
+
+          if [ ! -f docs/index.html ]; then
+            echo "docs/index.html not found"
+            exit 1
+          fi
+
+          if [ ! -f docs/files.json ]; then
+            echo "docs/files.json not found"
+            exit 1
+          fi
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
