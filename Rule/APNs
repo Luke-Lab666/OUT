@@ -1,13 +1,10 @@
 # NAME: APNs
 # AUTHOR: Luke-Lab666
 # REPO: https://github.com/Luke-Lab666/ProxyKit
-# UPDATED: 2026-06-15 17:21:46 UTC
-# DESC: Apple Push Notification service rules with destination port constraints.
+# UPDATED: 2026-06-15 17:28:46 UTC
+# DESC: Apple Push Notification service rules. Conservative and stable.
 # FORMAT: Surge Rule Set
-# REQUIRED-PORTS: TCP 80, 443, 5223, 2197
 
-AND,((IP-CIDR,17.0.0.0/8,no-resolve),(DEST-PORT,2197))
-AND,((IP-CIDR,17.0.0.0/8,no-resolve),(DEST-PORT,5223))
-AND,((IP-CIDR6,2620:149::/32,no-resolve),(DEST-PORT,2197))
-AND,((IP-CIDR6,2620:149::/32,no-resolve),(DEST-PORT,5223))
 DOMAIN-SUFFIX,push.apple.com
+IP-CIDR,17.0.0.0/8,no-resolve
+IP-CIDR6,2620:149::/32,no-resolve
