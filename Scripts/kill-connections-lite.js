@@ -6,7 +6,8 @@ const TYPE = arg.TYPE || (isPanel() ? "PANEL" : "EVENT");
 const DISMISS = toInt(arg.DISMISS, 2);
 const COOLDOWN = toInt(arg.COOLDOWN, 30);
 const FLUSH_DNS = arg.FLUSH_DNS === "1";
-const DNS_FLUSH_DELAY = Math.max(0, toInt(arg.DNS_FLUSH_DELAY, 15));
+const DNS_FLUSH_DELAY = Math.max(0, toInt(arg.DNS_FLUSH_DELAY, 30));
+const LOG = toInt(arg.LOG, 0);
 const ICON = arg.ICON || "xmark.circle";
 const ICON_COLOR = arg.ICON_COLOR || "#C5424A";
 
@@ -15,6 +16,8 @@ const STORE_TIME = "kill_connections_lite_last_time";
 const STORE_DNS_FLUSH_AT = "kill_connections_lite_dns_flush_at";
 
 (async () => {
+  log(1, `启动：TYPE=${TYPE}, LOG=${LOG}`);
+
   if (TYPE === "PANEL") {
     await runPanel();
     return;
@@ -30,9 +33,11 @@ const STORE_DNS_FLUSH_AT = "kill_connections_lite_dns_flush_at";
     return;
   }
 
+  log(1, `未知 TYPE：${TYPE}`);
   $done({});
 })().catch((e) => {
   const msg = e && e.message ? e.message : String(e);
+  log(1, `异常：${msg}`);
 
   if (isPanel()) {
     $done({
@@ -50,12 +55,16 @@ const STORE_DNS_FLUSH_AT = "kill_connections_lite_dns_flush_at";
 });
 
 async function runPanel() {
+  log(1, "进入面板模式");
+
   if ($trigger !== "button") {
     const pendingAt = toInt($persistentStore.read(STORE_DNS_FLUSH_AT), 0);
     const pendingText =
       pendingAt > Date.now()
         ? `\n待刷新 DNS：${formatTime(pendingAt)}`
         : "";
+
+    log(2, `面板刷新，pendingAt=${pendingAt}`);
 
     $done({
       title: "低内存打断连接",
@@ -74,6 +83,8 @@ async function runPanel() {
   const dnsText = FLUSH_DNS
     ? `\nDNS 将在 ${DNS_FLUSH_DELAY} 秒后由定时脚本刷新`
     : "\nDNS 刷新已关闭";
+
+  log(1, `面板打断完成，恢复模式=${beforeMode}，FLUSH_DNS=${FLUSH_DNS}`);
 
   $notification.post(
     "Surge",
@@ -94,7 +105,10 @@ async function runEvent() {
   const now = Date.now();
   const lastTime = toInt($persistentStore.read(STORE_TIME), 0);
 
+  log(1, "进入网络变化事件模式");
+
   if (now - lastTime < COOLDOWN * 1000) {
+    log(1, `冷却中，剩余约 ${Math.ceil((COOLDOWN * 1000 - (now - lastTime)) / 1000)} 秒`);
     $done({});
     return;
   }
@@ -102,15 +116,21 @@ async function runEvent() {
   const current = getNetworkState();
   const previous = safeJSONParse($persistentStore.read(STORE_NETWORK), null);
 
+  log(2, `当前网络：${JSON.stringify(current)}`);
+  log(2, `上次网络：${JSON.stringify(previous)}`);
+
   $persistentStore.write(JSON.stringify(current), STORE_NETWORK);
 
   if (!previous) {
+    log(1, "首次记录网络状态，不执行打断");
     $done({});
     return;
   }
 
   const mode = arg.EVENT_MODE || "wifi-change";
   const shouldKill = shouldKillByMode(previous, current, mode);
+
+  log(1, `EVENT_MODE=${mode}, shouldKill=${shouldKill}`);
 
   if (!shouldKill) {
     $done({});
@@ -136,18 +156,23 @@ async function runEvent() {
     );
   }
 
+  log(1, `事件打断完成，恢复模式=${beforeMode}`);
   $done({});
 }
 
 async function runDNSFlusher() {
   const flushAt = toInt($persistentStore.read(STORE_DNS_FLUSH_AT), 0);
 
+  log(2, `DNS_FLUSHER 检查，flushAt=${flushAt}, now=${Date.now()}`);
+
   if (!flushAt) {
+    log(2, "没有待刷新 DNS 任务");
     $done({});
     return;
   }
 
   if (Date.now() < flushAt) {
+    log(1, `DNS 刷新未到时间，预计：${formatTime(flushAt)}`);
     $done({});
     return;
   }
@@ -156,14 +181,20 @@ async function runDNSFlusher() {
 
   await httpAPI("/v1/dns/flush", "POST");
 
+  log(1, "已执行 DNS Flush");
   $done({});
 }
 
 function scheduleDNSFlushIfNeeded() {
-  if (!FLUSH_DNS) return;
+  if (!FLUSH_DNS) {
+    log(1, "FLUSH_DNS=0，不安排 DNS 刷新");
+    return;
+  }
 
   const flushAt = Date.now() + DNS_FLUSH_DELAY * 1000;
   $persistentStore.write(String(flushAt), STORE_DNS_FLUSH_AT);
+
+  log(1, `已安排 DNS Flush：${formatTime(flushAt)}`);
 }
 
 function shouldKillByMode(previous, current, mode) {
@@ -213,6 +244,8 @@ async function killConnections() {
   const outbound = await httpAPI("/v1/outbound", "GET");
   const beforeMode = outbound && outbound.mode ? outbound.mode : "rule";
 
+  log(1, `开始打断连接，当前出站模式=${beforeMode}`);
+
   let tempModes;
 
   if (beforeMode === "direct") {
@@ -223,29 +256,43 @@ async function killConnections() {
     tempModes = ["proxy", "direct", "rule"];
   }
 
+  log(2, `临时切换序列=${JSON.stringify(tempModes)}`);
+
   for (const mode of tempModes) {
+    log(2, `切换出站模式：${mode}`);
     await httpAPI("/v1/outbound", "POST", { mode });
     await sleep(120);
   }
 
+  log(2, `恢复出站模式：${beforeMode}`);
   await httpAPI("/v1/outbound", "POST", { mode: beforeMode });
   await sleep(120);
 
   const after = await httpAPI("/v1/outbound", "GET");
 
   if (!after || after.mode !== beforeMode) {
+    log(1, `模式恢复校验失败，再次恢复：${beforeMode}`);
     await httpAPI("/v1/outbound", "POST", { mode: beforeMode });
   }
 
+  log(1, "打断连接完成");
   return beforeMode;
 }
 
 function httpAPI(path, method, body) {
+  log(2, `HTTP API ${method} ${path}`);
+
   return new Promise((resolve) => {
     $httpAPI(method, path, body || null, (result) => {
+      log(2, `HTTP API 返回 ${path}: ${safeStringify(result)}`);
       resolve(result || {});
     });
   });
+}
+
+function log(level, message) {
+  if (LOG < level) return;
+  console.log(`[KillConnectionsLite] ${message}`);
 }
 
 function sleep(ms) {
@@ -280,6 +327,14 @@ function safeJSONParse(value, fallback) {
     return value ? JSON.parse(value) : fallback;
   } catch {
     return fallback;
+  }
+}
+
+function safeStringify(value) {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
   }
 }
 
