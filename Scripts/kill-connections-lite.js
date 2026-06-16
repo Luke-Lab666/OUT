@@ -13,7 +13,6 @@ const ICON_COLOR = arg.ICON_COLOR || "#C5424A";
 
 const STORE_NETWORK = "kill_connections_lite_last_network";
 const STORE_TIME = "kill_connections_lite_last_time";
-const STORE_DNS_FLUSH_AT = "kill_connections_lite_dns_flush_at";
 
 (async () => {
   log(1, `启动：TYPE=${TYPE}, LOG=${LOG}`);
@@ -25,11 +24,6 @@ const STORE_DNS_FLUSH_AT = "kill_connections_lite_dns_flush_at";
 
   if (TYPE === "EVENT") {
     await runEvent();
-    return;
-  }
-
-  if (TYPE === "DNS_FLUSHER") {
-    await runDNSFlusher();
     return;
   }
 
@@ -58,18 +52,11 @@ async function runPanel() {
   log(1, "进入面板模式");
 
   if ($trigger !== "button") {
-    const pendingAt = toInt($persistentStore.read(STORE_DNS_FLUSH_AT), 0);
-    const pendingText =
-      pendingAt > Date.now()
-        ? `\n待刷新 DNS：${formatTime(pendingAt)}`
-        : "";
-
-    log(2, `面板刷新，pendingAt=${pendingAt}`);
-
     $done({
       title: "低内存打断连接",
-      content:
-        "点击按钮执行打断连接\n网络变化自动打断由 Event 脚本处理" + pendingText,
+      content: FLUSH_DNS
+        ? `点击按钮执行打断连接\n打断后 ${DNS_FLUSH_DELAY} 秒刷新 DNS`
+        : "点击按钮执行打断连接\nDNS 刷新已关闭",
       icon: ICON,
       "icon-color": ICON_COLOR,
     });
@@ -77,14 +64,11 @@ async function runPanel() {
   }
 
   const beforeMode = await killConnections();
-
-  scheduleDNSFlushIfNeeded();
+  await delayedFlushDNSIfNeeded();
 
   const dnsText = FLUSH_DNS
-    ? `\nDNS 将在 ${DNS_FLUSH_DELAY} 秒后由定时脚本刷新`
+    ? `\n已在 ${DNS_FLUSH_DELAY} 秒后刷新 DNS`
     : "\nDNS 刷新已关闭";
-
-  log(1, `面板打断完成，恢复模式=${beforeMode}，FLUSH_DNS=${FLUSH_DNS}`);
 
   $notification.post(
     "Surge",
@@ -127,7 +111,7 @@ async function runEvent() {
     return;
   }
 
-  const mode = arg.EVENT_MODE || "wifi-change";
+  const mode = arg.EVENT_MODE || "always";
   const shouldKill = shouldKillByMode(previous, current, mode);
 
   log(1, `EVENT_MODE=${mode}, shouldKill=${shouldKill}`);
@@ -141,11 +125,9 @@ async function runEvent() {
 
   const beforeMode = await killConnections();
 
-  scheduleDNSFlushIfNeeded();
-
   if (arg.EVENT_NOTIFY === "1") {
     const dnsText = FLUSH_DNS
-      ? `\nDNS 将在 ${DNS_FLUSH_DELAY} 秒后刷新`
+      ? `\n${DNS_FLUSH_DELAY} 秒后刷新 DNS`
       : "\nDNS 刷新已关闭";
 
     $notification.post(
@@ -156,48 +138,32 @@ async function runEvent() {
     );
   }
 
+  await delayedFlushDNSIfNeeded();
+
   log(1, `事件打断完成，恢复模式=${beforeMode}`);
   $done({});
 }
 
-async function runDNSFlusher() {
-  const flushAt = toInt($persistentStore.read(STORE_DNS_FLUSH_AT), 0);
-
-  log(2, `DNS_FLUSHER 检查，flushAt=${flushAt}, now=${Date.now()}`);
-
-  if (!flushAt) {
-    log(2, "没有待刷新 DNS 任务");
-    $done({});
+async function delayedFlushDNSIfNeeded() {
+  if (!FLUSH_DNS) {
+    log(1, "FLUSH_DNS=0，不刷新 DNS");
     return;
   }
 
-  if (Date.now() < flushAt) {
-    log(1, `DNS 刷新未到时间，预计：${formatTime(flushAt)}`);
-    $done({});
-    return;
+  if (DNS_FLUSH_DELAY > 0) {
+    log(1, `等待 ${DNS_FLUSH_DELAY} 秒后刷新 DNS`);
+    await sleep(DNS_FLUSH_DELAY * 1000);
   }
-
-  $persistentStore.write("", STORE_DNS_FLUSH_AT);
 
   await httpAPI("/v1/dns/flush", "POST");
-
   log(1, "已执行 DNS Flush");
-  $done({});
-}
-
-function scheduleDNSFlushIfNeeded() {
-  if (!FLUSH_DNS) {
-    log(1, "FLUSH_DNS=0，不安排 DNS 刷新");
-    return;
-  }
-
-  const flushAt = Date.now() + DNS_FLUSH_DELAY * 1000;
-  $persistentStore.write(String(flushAt), STORE_DNS_FLUSH_AT);
-
-  log(1, `已安排 DNS Flush：${formatTime(flushAt)}`);
 }
 
 function shouldKillByMode(previous, current, mode) {
+  if (mode === "always") {
+    return true;
+  }
+
   if (mode === "wifi-lost") {
     return previous.hasWifi && !current.hasWifi;
   }
