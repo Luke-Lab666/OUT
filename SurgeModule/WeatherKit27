@@ -1,22 +1,9 @@
 #!name=WeatherKit27
-#!desc=iOS27 WeatherKit Provider适配层：接入彩云/和风/WAQI，抓取并标准化一小时降水和空气质量数据；WK2.Weather 二进制默认原样保留，避免旧模块重编码丢 iOS27 字段。
+#!desc=iOS27 WeatherKit Provider适配层：彩云/QWeather/WAQI；v3增加AQI原位注入。
 #!category=Luke-Lab666
-#!author=ChatGPT&Luke
 #!system=ios
-#!arguments=NextHour.Provider:"Auto",AirQuality.Provider:"Auto",AirQuality.Calculate.Algorithm:"WAQI_InstantCast_CN",API.ColorfulClouds.Token:"",API.QWeather.Host:"devapi.qweather.com",API.QWeather.Token:"",API.WAQI.Token:"",ForceAllDataSets:"1",Provider.CacheTTL:"300",Provider.PatchMode:"InjectAQI",LogLevel:"INFO",DebugNotify:"0",StripAnalytics:"0"
-#!arguments-desc=NextHour.Provider: WeatherKit不接入三方, ColorfulClouds彩云, QWeather和风, Auto按可用Token优先 QWeather -> ColorfulClouds
-AirQuality.Provider: WeatherKit不接入三方, ColorfulClouds彩云, QWeather和风, WAQI, Auto按可用Token优先 WAQI -> QWeather -> ColorfulClouds
-AirQuality.Calculate.Algorithm: None / WAQI_InstantCast_CN / WAQI_InstantCast_US / EU_EAQI；当前主要用于标准化缓存
-API.ColorfulClouds.Token: 彩云天气 Token
-API.QWeather.Host: 和风天气 Host，例如 devapi.qweather.com 或你的专属Host
-API.QWeather.Token: 和风天气 Key
-API.WAQI.Token: WAQI Token
-ForceAllDataSets: 1补齐 iOS27 dataSets
-Provider.CacheTTL: 第三方数据缓存秒数
-Provider.PatchMode: Preserve=只抓取三方数据并原样放行；InjectAQI=原位写入空气质量AQI；InjectAll=预留，当前等同InjectAQI
-LogLevel: OFF / ERROR / WARN / INFO / DEBUG / ALL
-DebugNotify: 1关键异常通知
-StripAnalytics: 1拦截天气分析事件，调试时建议0
+#!arguments=NextHourProvider:"Auto",AirQualityProvider:"Auto",AQIAlgorithm:"WAQI_InstantCast_CN",ColorfulCloudsToken:"",QWeatherHost:"devapi.qweather.com",QWeatherToken:"",WAQIToken:"",ForceAllDataSets:"1",ProviderCacheTTL:"300",PatchMode:"InjectAQI",LogLevel:"INFO",DebugNotify:"0",StripAnalytics:"0"
+#!arguments-desc=NextHourProvider: WeatherKit / ColorfulClouds / QWeather / Auto\nAirQualityProvider: WeatherKit / ColorfulClouds / QWeather / WAQI / Auto\nAQIAlgorithm: None / WAQI_InstantCast_CN / WAQI_InstantCast_US / EU_EAQI\nColorfulCloudsToken: 彩云天气Token\nQWeatherHost: 和风天气Host，例如 devapi.qweather.com 或专属Host\nQWeatherToken: 和风天气Key\nWAQIToken: WAQI Token\nForceAllDataSets: 1补齐iOS27 dataSets\nProviderCacheTTL: 第三方数据缓存秒数\nPatchMode: Preserve / InjectAQI / InjectAll\nLogLevel: OFF / ERROR / WARN / INFO / DEBUG / ALL\nDebugNotify: 1关键异常通知\nStripAnalytics: 1拦截天气分析事件，调试时建议0
 
 [General]
 force-http-engine-hosts = %APPEND% weatherkit.apple.com, weather-analytics-events.apple.com
@@ -31,9 +18,7 @@ DOMAIN-SUFFIX,qweatherapi.com,DIRECT
 
 [Script]
 WeatherKit iOS27 Provider Request = type=http-request,pattern=^https?:\/\/weatherkit\.apple\.com\/api\/v2\/weather\/,requires-body=0,max-size=0,timeout=5,script-path=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Scripts/request.js,argument="ForceAllDataSets={{{ForceAllDataSets}}}&LogLevel={{{LogLevel}}}"
-
-WeatherKit iOS27 Provider Response = type=http-response,pattern=^https?:\/\/weatherkit\.apple\.com\/api\/v2\/weather\/,requires-body=1,binary-body-mode=1,max-size=0,timeout=25,engine=webview,script-path=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Scripts/response.js,argument="NextHour.Provider={{{NextHour.Provider}}}&AirQuality.Provider={{{AirQuality.Provider}}}&AirQuality.Calculate.Algorithm={{{AirQuality.Calculate.Algorithm}}}&API.ColorfulClouds.Token={{{API.ColorfulClouds.Token}}}&API.QWeather.Host={{{API.QWeather.Host}}}&API.QWeather.Token={{{API.QWeather.Token}}}&API.WAQI.Token={{{API.WAQI.Token}}}&Provider.CacheTTL={{{Provider.CacheTTL}}}&Provider.PatchMode={{{Provider.PatchMode}}}&LogLevel={{{LogLevel}}}&DebugNotify={{{DebugNotify}}}"
-
+WeatherKit iOS27 Provider Response = type=http-response,pattern=^https?:\/\/weatherkit\.apple\.com\/api\/v2\/weather\/,requires-body=1,binary-body-mode=1,max-size=0,timeout=25,engine=webview,script-path=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Scripts/response.js,argument="NextHour.Provider={{{NextHourProvider}}}&AirQuality.Provider={{{AirQualityProvider}}}&AirQuality.Calculate.Algorithm={{{AQIAlgorithm}}}&API.ColorfulClouds.Token={{{ColorfulCloudsToken}}}&API.QWeather.Host={{{QWeatherHost}}}&API.QWeather.Token={{{QWeatherToken}}}&API.WAQI.Token={{{WAQIToken}}}&Provider.CacheTTL={{{ProviderCacheTTL}}}&Provider.PatchMode={{{PatchMode}}}&LogLevel={{{LogLevel}}}&DebugNotify={{{DebugNotify}}}"
 WeatherKit iOS27 Analytics = type=http-request,pattern=^https?:\/\/weather-analytics-events\.apple\.com\/,requires-body=0,max-size=0,timeout=3,script-path=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Scripts/analytics.js,argument="LogLevel={{{LogLevel}}}&StripAnalytics={{{StripAnalytics}}}"
 
 [MITM]
