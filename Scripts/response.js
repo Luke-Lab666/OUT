@@ -16,7 +16,7 @@
     'API.QWeather.Token':'',
     'API.WAQI.Token':'',
     'Provider.CacheTTL':'300',
-    'Provider.PatchMode':'Preserve',
+    'Provider.PatchMode':'InjectAQI',
     'LogLevel':'INFO',
     'DebugNotify':'0'
   };
@@ -33,6 +33,68 @@
   function inspectRoot(b){
     if(!b || b.length<12) return {ok:false,reason:'too small'};
     const root=u32(b,0); if(root<4 || root+4>b.length) return {ok:false,reason:`bad root ${root}`};
+    const vt=root-i32(b,root); if(vt<0 || vt+4>b.length) return {ok:false,reason:`bad vtable ${vt}`};
+    const vtLen=u16(b,vt), objSize=u16(b,vt+2); if(vtLen<4 || vtLen>512 || vt+vtLen>b.length) return {ok:false,reason:`bad vtLen ${vtLen}`};
+    const n=(vtLen-4)>>1, present=[]; for(let i=0;i<n;i++){ if(u16(b,vt+4+i*2)) present.push(i); }
+    return {ok:true,root,vt,vtLen,objSize,fieldCount:n,present};
+  }
+  function setU16(b,o,v){ v=Math.max(0,Math.min(65535,Math.round(Number(v)||0))); b[o]=v&255; b[o+1]=(v>>>8)&255; }
+  function getFieldOffset(b, tablePos, fieldIndex){
+    if(!b || tablePos<4 || tablePos+4>b.length) return 0;
+    const vt = tablePos - i32(b, tablePos);
+    if(vt<0 || vt+4>b.length) return 0;
+    const vtLen = u16(b, vt);
+    const indexOffset = 4 + fieldIndex * 2;
+    if(indexOffset + 2 > vtLen) return 0;
+    return u16(b, vt + indexOffset);
+  }
+  function getTableFieldTarget(b, tablePos, fieldIndex){
+    const off = getFieldOffset(b, tablePos, fieldIndex);
+    if(!off) return 0;
+    const loc = tablePos + off;
+    if(loc < 0 || loc + 4 > b.length) return 0;
+    const rel = u32(b, loc);
+    const target = loc + rel;
+    if(target < 4 || target >= b.length) return 0;
+    return target;
+  }
+  function aqiCategoryIndex(aqi){
+    aqi = Number(aqi);
+    if(!Number.isFinite(aqi)) return 0;
+    if(aqi <= 50) return 1;
+    if(aqi <= 100) return 2;
+    if(aqi <= 150) return 3;
+    if(aqi <= 200) return 4;
+    if(aqi <= 300) return 5;
+    return 6;
+  }
+  function patchAirQualityInPlace(body, bundle){
+    const mode = String(ARG['Provider.PatchMode'] || 'Preserve').toLowerCase();
+    if(!/inject|aqi|all/.test(mode)) return {patched:false, reason:`PatchMode=${ARG['Provider.PatchMode']}`};
+    const aq = bundle && bundle.airQuality;
+    const aqi = aq && Number(aq.aqi);
+    if(!Number.isFinite(aqi)) return {patched:false, reason:'no provider AQI'};
+    const rootInfo = inspectRoot(body);
+    if(!rootInfo.ok) return {patched:false, reason:`root ${rootInfo.reason}`};
+    const airQ = getTableFieldTarget(body, rootInfo.root, 0);
+    if(!airQ) return {patched:false, reason:'WK2 field0 airQuality missing'};
+    const airInfo = inspectRootAt(body, airQ);
+    if(!airInfo.ok) return {patched:false, reason:`airQuality ${airInfo.reason}`};
+    // iOS27 WK2.AirQuality root table observed from native samples:
+    // field2 @ object offset 16 = AQI integer, field1 @ offset 19 = categoryIndex.
+    // Do not rebuild FlatBuffer. Only patch fixed-width scalar bytes in-place.
+    const aqiOff = getFieldOffset(body, airQ, 2);
+    const catOff = getFieldOffset(body, airQ, 1);
+    if(!aqiOff) return {patched:false, reason:'AQI scalar field missing'};
+    const oldAqi = u16(body, airQ + aqiOff);
+    const oldCat = catOff ? body[airQ + catOff] : 0;
+    setU16(body, airQ + aqiOff, aqi);
+    const cat = aqiCategoryIndex(aqi);
+    if(catOff) body[airQ + catOff] = cat & 255;
+    return {patched:true, oldAqi, newAqi:Math.round(aqi), oldCat, newCat:cat, provider:aq.provider || ''};
+  }
+  function inspectRootAt(b, root){
+    if(!b || root<4 || root+4>b.length) return {ok:false,reason:'bad table pos'};
     const vt=root-i32(b,root); if(vt<0 || vt+4>b.length) return {ok:false,reason:`bad vtable ${vt}`};
     const vtLen=u16(b,vt), objSize=u16(b,vt+2); if(vtLen<4 || vtLen>512 || vt+vtLen>b.length) return {ok:false,reason:`bad vtLen ${vtLen}`};
     const n=(vtLen-4)>>1, present=[]; for(let i=0;i<n;i++){ if(u16(b,vt+4+i*2)) present.push(i); }
@@ -169,10 +231,18 @@
     log('INFO',`provider: nextHour=${nh}; airQuality=${aq}`);
     if(bundle.errors.length){ log('WARN',`provider errors: ${bundle.errors.join(' | ')}`); if(ARG.DebugNotify==='1') notify('WeatherKit Provider', '第三方源异常', bundle.errors.join('\n')); }
 
-    if(String(ARG['Provider.PatchMode']).toLowerCase() !== 'preserve'){
-      log('WARN','Provider.PatchMode=Experimental 已开启，但 iOS27 WK2.Weather 字段写入器未启用：为避免损坏天气App，本次仍原样放行。');
+    let outBody = null;
+    const mode = String(ARG['Provider.PatchMode'] || 'Preserve').toLowerCase();
+    if(mode !== 'preserve'){
+      const patched = patchAirQualityInPlace(body, bundle);
+      if(patched.patched){
+        outBody = body;
+        log('WARN',`injectAQI: ${patched.oldAqi}/${patched.oldCat} -> ${patched.newAqi}/${patched.newCat} provider=${patched.provider || 'unknown'}; nextHour still preserve`);
+      } else {
+        log('WARN',`injectAQI skipped: ${patched.reason}; nextHour still preserve`);
+      }
     }
-    $done({});
+    if(outBody) $done({ body: outBody }); else $done({});
   }
   main().catch(e=>{ console.log(`[${NAME}] ERROR ${e && e.stack || e}`); $done({}); });
 })();
