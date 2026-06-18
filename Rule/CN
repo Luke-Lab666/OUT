@@ -1,16 +1,16 @@
 # NAME: CN
 # AUTHOR: Luke-Lab666
 # REPO: https://github.com/Luke-Lab666/ProxyKit
-# UPDATED: 2026-06-17 23:48:58 UTC
+# UPDATED: 2026-06-18 23:59:01 UTC
 # DESC: CN-only public IP CIDR list. Deduplicated and collapsed.
-# COUNT: total=13285, ipv4=7913, ipv6=5372
+# COUNT: total=13286, ipv4=7914, ipv6=5372
 # FORMAT: Surge Rule Set
 # SOURCE:
-#   - https://china-operator-ip.yfgao.com/china46.txt [ok, +5782]
+#   - https://china-operator-ip.yfgao.com/china46.txt [ok, +5761]
 #   - https://gaoyifan.github.io/china-operator-ip/china46.txt [ok, +0]
-#   - https://raw.githubusercontent.com/Hackl0us/GeoIP2-CN/release/CN-ip-cidr.txt [ok, +5404]
-#   - https://raw.githubusercontent.com/carrnot/china-ip-list/release/ip.txt [ok, +7007]
-#   - https://ftp.apnic.net/stats/apnic/delegated-apnic-latest [ok, +3944]
+#   - https://raw.githubusercontent.com/Hackl0us/GeoIP2-CN/release/CN-ip-cidr.txt [ok, +5397]
+#   - https://raw.githubusercontent.com/carrnot/china-ip-list/release/ip.txt [ok, +7004]
+#   - https://ftp.apnic.net/stats/apnic/delegated-apnic-latest [ok, +3942]
 
 IP-CIDR,1.0.1.0/24,no-resolve
 IP-CIDR,1.0.2.0/23,no-resolve
@@ -1423,6 +1423,7 @@ IP-CIDR,67.21.64.0/24,no-resolve
 IP-CIDR,67.199.145.0/24,no-resolve
 IP-CIDR,67.220.137.144/28,no-resolve
 IP-CIDR,68.79.0.0/18,no-resolve
+IP-CIDR,68.166.219.0/24,no-resolve
 IP-CIDR,69.85.93.0/24,no-resolve
 IP-CIDR,69.91.176.0/24,no-resolve
 IP-CIDR,69.163.104.0/24,no-resolve
@@ -5937,6 +5938,7 @@ IP-CIDR,185.80.200.0/22,no-resolve
 IP-CIDR,185.95.100.0/22,no-resolve
 IP-CIDR,185.96.247.0/24,no-resolve
 IP-CIDR,185.109.236.0/24,no-resolve
+IP-CIDR,185.116.90.0/24,no-resolve
 IP-CIDR,185.183.84.0/24,no-resolve
 IP-CIDR,185.194.148.0/24,no-resolve
 IP-CIDR,185.201.226.0/23,no-resolve
@@ -7810,7 +7812,6 @@ IP-CIDR,213.210.28.128/25,no-resolve
 IP-CIDR,213.210.55.0/24,no-resolve
 IP-CIDR,213.218.211.0/24,no-resolve
 IP-CIDR,216.15.172.0/24,no-resolve
-IP-CIDR,216.75.87.0/24,no-resolve
 IP-CIDR,216.244.71.224/27,no-resolve
 IP-CIDR,216.244.80.0/29,no-resolve
 IP-CIDR,217.217.96.0/20,no-resolve
@@ -12589,7 +12590,8 @@ IP-CIDR6,2a0f:1cc5:20::/44,no-resolve
 IP-CIDR6,2a0f:1cc5:40::/44,no-resolve
 IP-CIDR6,2a0f:1cc5:110::/44,no-resolve
 IP-CIDR6,2a0f:1cc5:130::/44,no-resolve
-IP-CIDR6,2a0f:1cc5:140::/42,no-resolve
+IP-CIDR6,2a0f:1cc5:140::/43,no-resolve
+IP-CIDR6,2a0f:1cc5:170::/44,no-resolve
 IP-CIDR6,2a0f:1cc5:180::/42,no-resolve
 IP-CIDR6,2a0f:1cc5:1c0::/43,no-resolve
 IP-CIDR6,2a0f:1cc5:1e0::/44,no-resolve
@@ -12603,6 +12605,7 @@ IP-CIDR6,2a0f:1cc5:500::/40,no-resolve
 IP-CIDR6,2a0f:1cc5:600::/47,no-resolve
 IP-CIDR6,2a0f:1cc5:603::/48,no-resolve
 IP-CIDR6,2a0f:1cc5:640::/44,no-resolve
+IP-CIDR6,2a0f:1cc5:661::/48,no-resolve
 IP-CIDR6,2a0f:1cc5:662::/48,no-resolve
 IP-CIDR6,2a0f:1cc5:6a0::/48,no-resolve
 IP-CIDR6,2a0f:1cc5:900::/40,no-resolve
@@ -12644,6 +12647,7 @@ IP-CIDR6,2a0f:1cc5:1000::/48,no-resolve
 IP-CIDR6,2a0f:1cc5:1010::/44,no-resolve
 IP-CIDR6,2a0f:1cc5:1032::/47,no-resolve
 IP-CIDR6,2a0f:1cc5:1034::/47,no-resolve
+IP-CIDR6,2a0f:1cc5:1041::/48,no-resolve
 IP-CIDR6,2a0f:1cc5:1286::/48,no-resolve
 IP-CIDR6,2a0f:1cc5:1320::/43,no-resolve
 IP-CIDR6,2a0f:1cc5:1340::/42,no-resolve
@@ -12664,11 +12668,7 @@ IP-CIDR6,2a0f:1cc5:1c11::/48,no-resolve
 IP-CIDR6,2a0f:1cc5:1c12::/47,no-resolve
 IP-CIDR6,2a0f:1cc5:1c14::/46,no-resolve
 IP-CIDR6,2a0f:1cc5:1c18::/45,no-resolve
-IP-CIDR6,2a0f:1cc5:1c21::/48,no-resolve
-IP-CIDR6,2a0f:1cc5:1c22::/47,no-resolve
-IP-CIDR6,2a0f:1cc5:1c24::/46,no-resolve
-IP-CIDR6,2a0f:1cc5:1c28::/45,no-resolve
-IP-CIDR6,2a0f:1cc5:1c30::/44,no-resolve
+IP-CIDR6,2a0f:1cc5:1c20::/43,no-resolve
 IP-CIDR6,2a0f:1cc5:1c40::/42,no-resolve
 IP-CIDR6,2a0f:1cc5:1c80::/41,no-resolve
 IP-CIDR6,2a0f:1cc5:1d01::/48,no-resolve
@@ -12849,6 +12849,7 @@ IP-CIDR6,2a12:cb41::/44,no-resolve
 IP-CIDR6,2a12:cb41:600::/39,no-resolve
 IP-CIDR6,2a12:cb41:1200::/44,no-resolve
 IP-CIDR6,2a12:cb41:1300::/44,no-resolve
+IP-CIDR6,2a12:cb41:13f0::/44,no-resolve
 IP-CIDR6,2a12:cb42:200::/40,no-resolve
 IP-CIDR6,2a12:cb46::/36,no-resolve
 IP-CIDR6,2a12:cb47:ffff::/48,no-resolve
