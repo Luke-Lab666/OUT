@@ -1,5 +1,5 @@
 #!name=WeatherKit27
-#!desc=iOS27 WeatherKit AQI 原位注入；降水走 forecastHourly 轻量注入。
+#!desc=iOS27 WeatherKit 适配：AQI 原位注入；降水走 forecastHourly 轻量注入；v1.1 并行拉取 Provider，减少 CANCEL。
 #!category=Luke-Lab666
 #!system=ios
 #!arguments=AirQualityProvider:"WAQI",PrecipitationProvider:"QWeather",AQIAlgorithm:"WAQI_InstantCast_CN",ColorfulCloudsToken:"",QWeatherHost:"devapi.qweather.com",QWeatherToken:"",WAQIToken:"",ForceAllDataSets:"1",ProviderCacheTTL:"1800",ProviderLiveFetch:"1",ProviderLiveTimeout:"1800",PatchMode:"InjectAll",PrecipitationHours:"12",LogLevel:"INFO",DebugNotify:"0",StripAnalytics:"0"
