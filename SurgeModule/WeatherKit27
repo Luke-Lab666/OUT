@@ -3,8 +3,20 @@
 #!category=Luke-Lab666
 #!author=ChatGPT&Luke
 #!system=ios
-#!arguments=NextHour.Provider:"Auto",AirQuality.Provider:"Auto",AirQuality.Calculate.Algorithm:"WAQI_InstantCast_CN",API.ColorfulClouds.Token:"",API.QWeather.Host:"devapi.qweather.com",API.QWeather.Token:"",API.WAQI.Token:"",ForceAllDataSets:"1",Provider.CacheTTL:"300",Provider.PatchMode:"Preserve",LogLevel:"INFO",DebugNotify:"0",StripAnalytics:"0"
-#!arguments-desc=NextHour.Provider: WeatherKit不接入三方, ColorfulClouds彩云, QWeather和风, Auto按可用Token优先 QWeather -> ColorfulClouds\nAirQuality.Provider: WeatherKit不接入三方, ColorfulClouds彩云, QWeather和风, WAQI, Auto按可用Token优先 WAQI -> QWeather -> ColorfulClouds\nAirQuality.Calculate.Algorithm: None / WAQI_InstantCast_CN / WAQI_InstantCast_US / EU_EAQI；当前用于标准化缓存，不强写Apple二进制\nAPI.ColorfulClouds.Token: 彩云天气 Token\nAPI.QWeather.Host: 和风天气 Host，例如 devapi.qweather.com 或你的专属Host\nAPI.QWeather.Token: 和风天气 Key\nAPI.WAQI.Token: WAQI Token\nForceAllDataSets: 1补齐 iOS27 dataSets\nProvider.CacheTTL: 第三方数据缓存秒数\nProvider.PatchMode: Preserve=只保留原生WK2并缓存三方数据；Experimental=预留写入器开关，当前仍fail-open\nLogLevel: OFF / ERROR / WARN / INFO / DEBUG / ALL\nDebugNotify: 1关键异常通知\nStripAnalytics: 1拦截天气分析事件，调试时建议0
+#!arguments=NextHour.Provider:"Auto",AirQuality.Provider:"Auto",AirQuality.Calculate.Algorithm:"WAQI_InstantCast_CN",API.ColorfulClouds.Token:"",API.QWeather.Host:"devapi.qweather.com",API.QWeather.Token:"",API.WAQI.Token:"",ForceAllDataSets:"1",Provider.CacheTTL:"300",Provider.PatchMode:"InjectAQI",LogLevel:"INFO",DebugNotify:"0",StripAnalytics:"0"
+#!arguments-desc=NextHour.Provider: WeatherKit不接入三方, ColorfulClouds彩云, QWeather和风, Auto按可用Token优先 QWeather -> ColorfulClouds
+AirQuality.Provider: WeatherKit不接入三方, ColorfulClouds彩云, QWeather和风, WAQI, Auto按可用Token优先 WAQI -> QWeather -> ColorfulClouds
+AirQuality.Calculate.Algorithm: None / WAQI_InstantCast_CN / WAQI_InstantCast_US / EU_EAQI；当前主要用于标准化缓存
+API.ColorfulClouds.Token: 彩云天气 Token
+API.QWeather.Host: 和风天气 Host，例如 devapi.qweather.com 或你的专属Host
+API.QWeather.Token: 和风天气 Key
+API.WAQI.Token: WAQI Token
+ForceAllDataSets: 1补齐 iOS27 dataSets
+Provider.CacheTTL: 第三方数据缓存秒数
+Provider.PatchMode: Preserve=只抓取三方数据并原样放行；InjectAQI=原位写入空气质量AQI；InjectAll=预留，当前等同InjectAQI
+LogLevel: OFF / ERROR / WARN / INFO / DEBUG / ALL
+DebugNotify: 1关键异常通知
+StripAnalytics: 1拦截天气分析事件，调试时建议0
 
 [General]
 force-http-engine-hosts = %APPEND% weatherkit.apple.com, weather-analytics-events.apple.com
