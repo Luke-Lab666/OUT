@@ -1,6 +1,7 @@
 /*
  * WeatherKit27.response.js
  * Surge iOS 27 WeatherKit adapter.
+ * v1.1: provider parallel fetch + safer cache merge.
  *
  * Stable core:
  * - Preserves iOS27 WK2.Weather 16-field root. No full FlatBuffer rebuild.
@@ -219,7 +220,10 @@
     if (provider === 'WAQI') aq = await fetchWAQI(loc, timeout);
     else if (provider === 'QWeather') aq = await fetchQWeatherAQI(loc, timeout);
     else if (provider === 'ColorfulClouds') aq = await fetchCaiyunAQI(loc, timeout);
-    if (aq && num(aq.aqi) != null) storeSet(k, Object.assign({}, c || {}, { savedAt:Date.now(), location:loc, airQuality:aq }));
+    if (aq && num(aq.aqi) != null) {
+      const latest = storeGet(k) || c || {};
+      storeSet(k, Object.assign({}, latest, { savedAt:Date.now(), location:loc, airQuality:aq }));
+    }
     return aq;
   }
 
@@ -282,7 +286,10 @@
     let pr = null;
     if (provider === 'QWeather') pr = await fetchQWeatherMinutely(loc, timeout);
     else if (provider === 'ColorfulClouds') pr = await fetchCaiyunMinutely(loc, timeout);
-    if (pr && Array.isArray(pr.rows)) storeSet(k, Object.assign({}, c || {}, { savedAt:Date.now(), location:loc, precipitation:pr }));
+    if (pr && Array.isArray(pr.rows)) {
+      const latest = storeGet(k) || c || {};
+      storeSet(k, Object.assign({}, latest, { savedAt:Date.now(), location:loc, precipitation:pr }));
+    }
     return pr;
   }
 
@@ -367,8 +374,19 @@
 
     let changed = false;
 
+    const mode = String(ARG['Provider.PatchMode'] || 'InjectAll').toLowerCase();
+    const needAQI = /(injectall|inject|aqi|all)/.test(mode);
+    const needPrecip = /(injectall|precip|hourly|all)/.test(mode);
+
+    // v1.1: AQI 和降水并行拉取，避免 WAQI 后再等 QWeather 导致 Weather.app CANCEL。
+    const aqJob = needAQI ? getAQI(loc).then(v => ({ ok:true, value:v })).catch(e => ({ ok:false, error:e })) : Promise.resolve({ ok:true, value:null });
+    const prJob = needPrecip ? getPrecip(loc).then(v => ({ ok:true, value:v })).catch(e => ({ ok:false, error:e })) : Promise.resolve({ ok:true, value:null });
+    const [aqRes, prRes] = await Promise.all([aqJob, prJob]);
+
     let aq = null;
-    try { aq = await getAQI(loc); } catch (e) { log('WARN', `AQI provider failed: ${e.message || e}`); notify('WeatherKit27', 'AQI provider failed', String(e.message || e)); }
+    if (aqRes.ok) aq = aqRes.value;
+    else { log('WARN', `AQI provider failed: ${aqRes.error && aqRes.error.message || aqRes.error}`); notify('WeatherKit27', 'AQI provider failed', String(aqRes.error && aqRes.error.message || aqRes.error)); }
+
     const resolved = resolveAQI(aq);
     if (resolved) log('INFO', `AQI provider=${resolved.provider} raw=${aq.aqi} patch=${resolved.aqi}/${resolved.categoryIndex} algorithm=${resolved.algorithm} ${resolved.note || ''}`);
     const ap = patchAirQualityInPlace(body, resolved);
@@ -376,7 +394,9 @@
     else log('INFO', `injectAQI skipped: ${ap.reason}`);
 
     let pr = null;
-    try { pr = await getPrecip(loc); } catch (e) { log('WARN', `Precip provider failed: ${e.message || e}`); notify('WeatherKit27', 'Precip provider failed', String(e.message || e)); }
+    if (prRes.ok) pr = prRes.value;
+    else { log('WARN', `Precip provider failed: ${prRes.error && prRes.error.message || prRes.error}`); notify('WeatherKit27', 'Precip provider failed', String(prRes.error && prRes.error.message || prRes.error)); }
+
     if (pr) log('INFO', `Precip provider=${pr.provider} rows=${(pr.rows || []).length} summary=${pr.summary || ''}`);
     const pp = patchHourlyPrecip(body, pr);
     if (pp.patched > 0) { changed = true; log('WARN', `injectPrecipHourly: patched=${pp.patched} skipped=${pp.skipped} provider=${pp.provider} ${pp.sample || ''}`); }
