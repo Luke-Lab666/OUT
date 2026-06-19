@@ -1,0 +1,324 @@
+#!name=Block HTTPDNS
+#!desc=阻止常见 HTTPDNS/私有 DoH/App 内置解析端点，强制更多请求回到 Surge DNS 框架。偏激进，建议放在模块靠前位置。
+#!author=Luke-Lab666
+#!category=Luke-Lab666
+#!tag=DNS
+#!date=2026-06-19
+
+[Rule]
+# ================================
+# Generic Catch
+# ================================
+# 大兜底：绝大多数 HTTPDNS 域名都带 httpdns
+DOMAIN-KEYWORD,httpdns,REJECT
+
+# 腾讯云 / DNSPod HTTPDNS
+DOMAIN-SUFFIX,httpdns.pro,REJECT
+
+# ================================
+# Alibaba / Aliyun / Alipay
+# ================================
+DOMAIN,httpdns.alicdn.com,REJECT
+DOMAIN,httpdns-api.aliyuncs.com,REJECT
+DOMAIN,httpdns-sc.aliyuncs.com,REJECT
+DOMAIN,resolvers-cn.httpdns.aliyuncs.com,REJECT
+DOMAIN,httpdns.aliyuncs.com,REJECT
+
+# 阿里 HTTPDNS 常见直连段
+IP-CIDR,203.107.1.0/24,REJECT,no-resolve
+IP-CIDR6,2401:b180:2000:20::10/128,REJECT,no-resolve
+IP-CIDR6,2401:b180:2000:30::1c/128,REJECT,no-resolve
+
+# ================================
+# Tencent / WeChat / WeCom / QQ / Kuwo
+# ================================
+DOMAIN,aedns.weixin.qq.com,REJECT
+DOMAIN,dns.weixin.qq.com,REJECT
+DOMAIN,dns.weixin.qq.com.cn,REJECT
+DOMAIN,paydns.wechatpay.cn,REJECT
+DOMAIN,httpdns.kg.qq.com,REJECT
+
+IP-CIDR,42.81.232.18/32,REJECT,no-resolve
+IP-CIDR,42.187.182.106/32,REJECT,no-resolve
+IP-CIDR,42.187.182.123/32,REJECT,no-resolve
+IP-CIDR,42.187.184.154/32,REJECT,no-resolve
+IP-CIDR,123.151.54.50/32,REJECT,no-resolve
+IP-CIDR,182.254.116.117/32,REJECT,no-resolve
+IP-CIDR,182.254.118.119/32,REJECT,no-resolve
+IP-CIDR,119.29.29.98/32,REJECT,no-resolve
+IP-CIDR,119.29.29.99/32,REJECT,no-resolve
+IP-CIDR6,2402:4e00:1900:1700:0:9554:1ad9:c3a/128,REJECT,no-resolve
+IP-CIDR6,240e:928:1400:10::25/128,REJECT,no-resolve
+
+# 微信 / 腾讯系额外兜底，偏激进
+IP-CIDR,39.156.140.30/32,REJECT,no-resolve
+IP-CIDR,39.156.140.47/32,REJECT,no-resolve
+IP-CIDR,39.156.140.245/32,REJECT,no-resolve
+IP-CIDR,43.130.30.237/32,REJECT,no-resolve
+IP-CIDR,43.130.30.240/32,REJECT,no-resolve
+IP-CIDR,43.137.153.151/32,REJECT,no-resolve
+IP-CIDR,43.137.159.31/32,REJECT,no-resolve
+IP-CIDR,43.152.112.101/32,REJECT,no-resolve
+IP-CIDR,43.153.248.120/32,REJECT,no-resolve
+IP-CIDR,60.28.172.100/32,REJECT,no-resolve
+IP-CIDR,61.151.231.157/32,REJECT,no-resolve
+IP-CIDR,101.32.104.104/32,REJECT,no-resolve
+IP-CIDR,106.39.206.21/32,REJECT,no-resolve
+IP-CIDR,106.39.206.25/32,REJECT,no-resolve
+IP-CIDR,106.39.206.70/32,REJECT,no-resolve
+IP-CIDR,111.31.201.194/32,REJECT,no-resolve
+IP-CIDR,111.31.241.76/32,REJECT,no-resolve
+IP-CIDR,111.31.241.140/32,REJECT,no-resolve
+IP-CIDR,111.206.147.156/32,REJECT,no-resolve
+IP-CIDR,111.206.147.210/32,REJECT,no-resolve
+IP-CIDR,111.206.148.27/32,REJECT,no-resolve
+IP-CIDR,116.128.177.249/32,REJECT,no-resolve
+IP-CIDR,116.130.224.150/32,REJECT,no-resolve
+IP-CIDR,116.130.224.205/32,REJECT,no-resolve
+IP-CIDR,117.185.247.73/32,REJECT,no-resolve
+IP-CIDR,123.151.48.171/32,REJECT,no-resolve
+IP-CIDR,123.151.48.193/32,REJECT,no-resolve
+IP-CIDR,123.151.48.208/32,REJECT,no-resolve
+IP-CIDR,180.153.202.85/32,REJECT,no-resolve
+IP-CIDR,183.192.196.31/32,REJECT,no-resolve
+IP-CIDR,203.205.129.102/32,REJECT,no-resolve
+IP-CIDR,203.205.234.132/32,REJECT,no-resolve
+IP-CIDR,220.196.159.73/32,REJECT,no-resolve
+IP-CIDR6,2402:4e00:8030:1::17/128,REJECT,no-resolve
+IP-CIDR6,2408:8711:10:10::20/128,REJECT,no-resolve
+IP-CIDR6,2409:8702:4860:10::4d/128,REJECT,no-resolve
+
+# ================================
+# ByteDance / Douyin / Toutiao
+# ================================
+DOMAIN,httpdns.volcengineapi.com,REJECT
+DOMAIN,dig.bdurl.net,REJECT
+DOMAIN,dig.zjurl.cn,REJECT
+
+# ================================
+# Baidu / BaiduBCE
+# ================================
+DOMAIN,httpdns.baidu.com,REJECT
+DOMAIN,httpsdns.baidu.com,REJECT
+DOMAIN,httpdns.baidubce.com,REJECT
+DOMAIN,httpdns.bcelive.com,REJECT
+DOMAIN,httpdns.n.shifen.com,REJECT
+
+IP-CIDR,180.76.76.112/32,REJECT,no-resolve
+IP-CIDR,180.76.76.200/32,REJECT,no-resolve
+IP-CIDR,180.76.76.220/32,REJECT,no-resolve
+
+# ================================
+# Bilibili
+# ================================
+DOMAIN,httpdns.bilivideo.com,REJECT
+
+# ================================
+# iQIYI / Gitv
+# ================================
+DOMAIN,doh.iqiyi.com,REJECT
+DOMAIN,dns.iqiyi.com,REJECT
+DOMAIN,dns.qiyipic.iqiyi.com,REJECT
+DOMAIN,doh.ptqy.gitv.tv,REJECT
+
+# ================================
+# JD
+# ================================
+DOMAIN,dns.jd.com,REJECT
+
+IP-CIDR,101.124.19.122/32,REJECT,no-resolve
+IP-CIDR,103.224.222.208/32,REJECT,no-resolve
+IP-CIDR6,2402:db40:5100:1011::5/128,REJECT,no-resolve
+
+# ================================
+# Meituan
+# ================================
+DOMAIN,httpdns.meituan.com,REJECT
+DOMAIN,httpdnsmultiapi.meituan.com,REJECT
+DOMAIN,httpdnsmultiapivip.meituan.com,REJECT
+DOMAIN,dnspod.meituan.httpdns.qcloud.com,REJECT
+DOMAIN,dnspod.meituan.httpdns.start.qcloud.com,REJECT
+
+IP-CIDR,202.90.108.13/32,REJECT,no-resolve
+IP-CIDR,202.90.110.46/32,REJECT,no-resolve
+IP-CIDR,103.37.155.60/32,REJECT,no-resolve
+IP-CIDR,81.69.130.131/32,REJECT,no-resolve
+IP-CIDR,101.35.204.35/32,REJECT,no-resolve
+IP-CIDR,101.35.212.35/32,REJECT,no-resolve
+IP-CIDR,114.110.96.6/32,REJECT,no-resolve
+IP-CIDR,114.110.96.26/32,REJECT,no-resolve
+IP-CIDR,114.110.97.30/32,REJECT,no-resolve
+IP-CIDR,114.110.97.97/32,REJECT,no-resolve
+IP-CIDR,121.5.84.85/32,REJECT,no-resolve
+IP-CIDR6,2402:4e00:1411:201:0:9964:ba21:5a41/128,REJECT,no-resolve
+
+# ================================
+# NetEase / 163 / Yunxin / LOFTER
+# ================================
+DOMAIN,httpdns.yunxinfw.com,REJECT
+DOMAIN,httpdns.yunxindns.com,REJECT
+DOMAIN,httpdns.n.netease.com,REJECT
+DOMAIN,httpdns-sdk.n.netease.com,REJECT
+DOMAIN,httpdns.music.163.com,REJECT
+DOMAIN,music.httpdns.c.163.com,REJECT
+DOMAIN,lofter.httpdns.c.163.com,REJECT
+
+IP-CIDR,59.111.239.61/32,REJECT,no-resolve
+IP-CIDR,59.111.239.62/32,REJECT,no-resolve
+IP-CIDR,115.236.121.51/32,REJECT,no-resolve
+IP-CIDR,115.236.121.195/32,REJECT,no-resolve
+
+# ================================
+# OPPO / HeyTap
+# ================================
+DOMAIN,httpdns.ocloud.oppomobile.com,REJECT
+DOMAIN,httpdns.push.oppomobile.com,REJECT
+DOMAIN,httpdns.ocloud.heytapmobi.com,REJECT
+DOMAIN,httpdns.push.heytapmobi.com,REJECT
+
+# ================================
+# Huawei / Huawei Cloud / dbankcloud
+# ================================
+DOMAIN,httpdns.c.cdnhwc2.com,REJECT
+DOMAIN,httpdns1.cc.cdnhwc5.com,REJECT
+DOMAIN,httpdns.huaweicloud.com,REJECT
+DOMAIN,httpdns-browser.platform.dbankcloud.cn,REJECT
+DOMAIN,httpdns.platform.dbankcloud.cn,REJECT
+DOMAIN,httpdns.platform.dbankcloud.com,REJECT
+
+# ================================
+# Xiaomi / MIUI
+# ================================
+DOMAIN,httpdns.browser.miui.com,REJECT
+DOMAIN,resolver.msg.xiaomi.net,REJECT
+
+# ================================
+# Kuaishou
+# ================================
+DOMAIN,kuaishou.httpdns.pro,REJECT
+DOMAIN,httpdns.kwd.inkuai.com,REJECT
+DOMAIN,apidns.kwd.inkuai.com,REJECT
+DOMAIN,apidns-js.kwd.inkuai.com,REJECT
+
+# ================================
+# Weibo
+# ================================
+DOMAIN,dns.weibo.cn,REJECT
+
+IP-CIDR,39.97.128.148/32,REJECT,no-resolve
+IP-CIDR,39.97.130.51/32,REJECT,no-resolve
+
+# ================================
+# Douyu / Huya / YY
+# ================================
+DOMAIN,dotserver.douyucdn.cn,REJECT
+DOMAIN,yuyin-httpdns.gslb.yy.com,REJECT
+DOMAIN,yyapp-httpdns.gslb.yy.com,REJECT
+DOMAIN,union-httpdns.gslb.yy.com,REJECT
+DOMAIN,httpdns-v6.gslb.yy.com,REJECT
+DOMAIN,cdn.wup.huya.com,REJECT
+
+# ================================
+# Kingsoft / Qiniu-like / Other CDN
+# ================================
+DOMAIN,hdns.ksyun.com,REJECT
+DOMAIN,dns2.q2cdn.com,REJECT
+DOMAIN,httpdns.danuoyi.tbcache.com,REJECT
+DOMAIN,httpdns.cctv.com,REJECT
+
+# ================================
+# Other Apps
+# ================================
+DOMAIN,httpdns.immomo.com,REJECT
+DOMAIN,httpdns.calorietech.com,REJECT
+DOMAIN,httpdns.zybang.com,REJECT
+DOMAIN,hd.xiaojukeji.com,REJECT
+
+# Zhihu
+IP-CIDR,118.89.204.198/32,REJECT,no-resolve
+IP-CIDR6,2402:4e00:1200:ed00:0:9089:6dac:96b6/128,REJECT,no-resolve
+
+# ================================
+# Optional: Public DoH / DNS over HTTPS
+# 默认注释。你如果想强制所有 App 不准绕 Surge DNS，可以取消注释。
+# 但这会影响你自己配置的 DoH / DoT / DNS 测试工具。
+# ================================
+# DOMAIN,dns.google,REJECT
+# DOMAIN,dns.google.com,REJECT
+# DOMAIN,cloudflare-dns.com,REJECT
+# DOMAIN,dns.quad9.net,REJECT
+# DOMAIN,doh.opendns.com,REJECT
+# DOMAIN,doh.pub,REJECT
+# DOMAIN,dns.alidns.com,REJECT
+# DOMAIN,doh.360.cn,REJECT
+# DOMAIN,dns.twnic.tw,REJECT
+# IP-CIDR,1.1.1.1/32,REJECT,no-resolve
+# IP-CIDR,1.0.0.1/32,REJECT,no-resolve
+# IP-CIDR,8.8.8.8/32,REJECT,no-resolve
+# IP-CIDR,8.8.4.4/32,REJECT,no-resolve
+# IP-CIDR,9.9.9.9/32,REJECT,no-resolve
+# IP-CIDR,149.112.112.112/32,REJECT,no-resolve
+# IP-CIDR,223.5.5.5/32,REJECT,no-resolve
+# IP-CIDR,223.6.6.6/32,REJECT,no-resolve
+
+[URL Rewrite]
+# ================================
+# IP Literal HTTPDNS API
+# 这部分主要针对 App 直接请求 http://IP/path 的情况。
+# HTTPS 直连 IP 如果没 MITM，URL 路径不可见，只能靠上面的 IP-CIDR。
+# ================================
+
+# DNSPod / Tencent
+^https?:\/\/119\.29\.29\.29\/d - reject
+^https?:\/\/182\.254\.116\.116\/d - reject
+
+# Alibaba HTTPDNS
+^https?:\/\/203\.107\.1\.1\/\d+\/ss - reject
+^https?:\/\/203\.107\.1\.33\/\d+\/ss - reject
+^https?:\/\/203\.107\.1\.66\/\d+\/ss - reject
+^https?:\/\/203\.107\.1\.67\/\d+\/ss - reject
+^https?:\/\/203\.107\.1\.97\/\d+\/ss - reject
+
+# Baidu HTTPDNS
+^https?:\/\/180\.76\.76\.112\/v\d\/resolve - reject
+^https?:\/\/180\.76\.76\.200\/v\d\/resolve - reject
+^https?:\/\/180\.76\.76\.220\/v\d\/resolve - reject
+
+# Weibo HTTPDNS
+^https?:\/\/api\.weibo\.cn\/2\/httpdns\/config - reject
+^https?:\/\/api\.weibo\.cn\/httpdns\/config - reject
+^https?:\/\/103\.41\.167\.237\/v2\/resolv - reject
+
+# Bilibili / Huawei resolver style
+^https?:\/\/47\.101\.175\.206\/resolve - reject
+^https?:\/\/47\.100\.123\.169\/resolve - reject
+^https?:\/\/120\.46\.169\.234\/resolve - reject
+^https?:\/\/121\.36\.72\.124\/resolve - reject
+^https?:\/\/116\.63\.10\.135\/resolve - reject
+^https?:\/\/117\.185\.228\.108\/resolve - reject
+^https?:\/\/117\.144\.238\.29\/resolve - reject
+^https?:\/\/122\.9\.7\.134\/resolve - reject
+^https?:\/\/101\.91\.140\.124\/resolve - reject
+^https?:\/\/101\.91\.140\.224\/resolve - reject
+^https?:\/\/122\.9\.13\.79\/resolve - reject
+^https?:\/\/122\.9\.15\.129\/resolve - reject
+^https?:\/\/112\.65\.200\.117\/resolve - reject
+^https?:\/\/112\.64\.218\.119\/resolve - reject
+^https?:\/\/114\.116\.215\.110\/resolve - reject
+^https?:\/\/116\.63\.10\.31\/resolve - reject
+
+# Meituan
+^https?:\/\/103\.37\.155\.60\/fetch - reject
+^https?:\/\/81\.69\.130\.131\/d - reject
+^https?:\/\/101\.35\.204\.35\/d - reject
+^https?:\/\/101\.35\.212\.35\/d - reject
+^https?:\/\/114\.110\.96\.6\/d - reject
+^https?:\/\/114\.110\.96\.26\/d - reject
+^https?:\/\/114\.110\.97\.30\/d - reject
+^https?:\/\/114\.110\.97\.97\/d - reject
+^https?:\/\/121\.5\.84\.85\/d - reject
+
+# YY / Huya
+^http:\/\/103\.44\.58\.64\/md\? - reject
+^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns - reject
+^http:\/\/cdn\.wup\.huya\.com\/monitor\/monitor\.jsp - reject
