@@ -1,0 +1,118 @@
+#!name=番茄小说 + 红果短剧去广告 Aggressive
+#!desc=激进移除番茄小说开屏广告、文章底部广告、章末广告、听书广告、悬浮部件、底栏福利标签；强力拦截红果短剧广告、福利、金币、任务、激励视频链路。
+#!author=Luke-Lab666
+#!category=Luke-Lab666
+#!tag=去广告
+#!date=2026-06-19
+
+[Rule]
+# ================================
+# ByteDance / Pangle / 穿山甲广告核心
+# ================================
+DOMAIN-SUFFIX,pangolin.snssdk.com,REJECT-DROP
+DOMAIN-SUFFIX,pangolin-sdk-toutiao.com,REJECT-DROP
+DOMAIN-SUFFIX,pangolin-sdk-toutiao-b.com,REJECT-DROP
+DOMAIN-SUFFIX,pangolin-sdk-toutiao1.com,REJECT-DROP
+DOMAIN-SUFFIX,pangolin-sdk-toutiao2.com,REJECT-DROP
+DOMAIN-SUFFIX,pangle.io,REJECT-DROP
+DOMAIN-SUFFIX,bytedance.com,REJECT-DROP
+
+DOMAIN,ad.zijieapi.com,REJECT-DROP
+DOMAIN,ad-cn.snssdk.com,REJECT-DROP
+DOMAIN,ads3-normal.zijieapi.com,REJECT-DROP
+DOMAIN,ads5-normal.zijieapi.com,REJECT-DROP
+DOMAIN,ads3-normal-lf.zijieapi.com,REJECT-DROP
+DOMAIN,ads5-normal-lf.zijieapi.com,REJECT-DROP
+DOMAIN,ads3-normal-hl.zijieapi.com,REJECT-DROP
+DOMAIN,ads5-normal-hl.zijieapi.com,REJECT-DROP
+DOMAIN,ads3-normal-lq.zijieapi.com,REJECT-DROP
+DOMAIN,ads5-normal-lq.zijieapi.com,REJECT-DROP
+DOMAIN,dm.toutiao.com,REJECT-DROP
+DOMAIN,ad.toutiao.com,REJECT-DROP
+
+# ================================
+# 番茄小说广告 / 日志 / AB / 监控
+# ================================
+DOMAIN-SUFFIX,fqnovel.com,REJECT-DROP
+DOMAIN,api5-normal-lf.fqnovel.com,DIRECT
+DOMAIN,api5-normal-hl.fqnovel.com,DIRECT
+DOMAIN,api5-normal-lq.fqnovel.com,DIRECT
+DOMAIN,api.fqnovel.com,DIRECT
+
+DOMAIN,log3-applog.fqnovel.com,REJECT-DROP
+DOMAIN,log5-applog.fqnovel.com,REJECT-DROP
+DOMAIN,rtlog3-applog.fqnovel.com,REJECT-DROP
+DOMAIN,rtlog5-applog.fqnovel.com,REJECT-DROP
+DOMAIN,mon3-misc.fqnovel.com,REJECT-DROP
+DOMAIN,mon11-misc.fqnovel.com,REJECT-DROP
+DOMAIN,mon11-misc-lq.fqnovel.com,REJECT-DROP
+
+# ================================
+# 字节系日志 / 监控 / AB / 风控
+# ================================
+DOMAIN-SUFFIX,applog.snssdk.com,REJECT-DROP
+DOMAIN-SUFFIX,log.snssdk.com,REJECT-DROP
+DOMAIN-SUFFIX,mon.snssdk.com,REJECT-DROP
+DOMAIN-SUFFIX,mon.toutiaocloud.com,REJECT-DROP
+DOMAIN-SUFFIX,mon.toutiaocloud.net,REJECT-DROP
+
+DOMAIN,log.snssdk.com,REJECT-DROP
+DOMAIN,log-hl.snssdk.com,REJECT-DROP
+DOMAIN,log-lq.snssdk.com,REJECT-DROP
+DOMAIN,log-va.tiktokv.com,REJECT-DROP
+DOMAIN,mon.zijieapi.com,REJECT-DROP
+DOMAIN,timon.zijieapi.com,REJECT-DROP
+DOMAIN,abtest3-misc.zijieapi.com,REJECT-DROP
+DOMAIN,feedback-c.zijieapi.com,REJECT-DROP
+DOMAIN,ma.zijieapi.com,REJECT-DROP
+DOMAIN,vcs.zijieapi.com,REJECT-DROP
+
+DOMAIN,mssdk.snssdk.com,REJECT-DROP
+DOMAIN,mssdk.zijieapi.com,REJECT-DROP
+DOMAIN,security.snssdk.com,REJECT-DROP
+DOMAIN,security.zijieapi.com,REJECT-DROP
+DOMAIN,i.snssdk.com,REJECT-DROP
+DOMAIN,is.snssdk.com,REJECT-DROP
+DOMAIN,is-lq.snssdk.com,REJECT-DROP
+
+# ================================
+# ByteGecko 动态广告资源包 / 弹窗组件 / 活动组件
+# ================================
+DOMAIN-SUFFIX,bytegecko.com,REJECT-DROP
+DOMAIN-SUFFIX,bytegecko.snssdk.com,REJECT-DROP
+DOMAIN,gecko3.zijieapi.com,REJECT-DROP
+DOMAIN,gecko5.zijieapi.com,REJECT-DROP
+DOMAIN,lf-normal-gr-sourcecdn.bytegecko.com,REJECT-DROP
+DOMAIN,lf-webcast-gr-sourcecdn.bytegecko.com,REJECT-DROP
+
+# ================================
+# 红果短剧 / 抖音系广告资源 / 直播短剧组件
+# ================================
+DOMAIN,p3-developer.bytemaimg.com,REJECT-DROP
+DOMAIN,p3-webcast-sign.douyinpic.com,REJECT-DROP
+DOMAIN,p11-webcast-sign.douyinpic.com,REJECT-DROP
+DOMAIN,webcast-open.douyin.com,REJECT-DROP
+DOMAIN,webcast.amemv.com,REJECT-DROP
+DOMAIN,webcast5-normal-hl.amemv.com,REJECT-DROP
+DOMAIN,webcast5-normal-lq.amemv.com,REJECT-DROP
+
+# ================================
+# 福利 / 金币 / 任务 / 小游戏 / 钱包入口
+# ================================
+DOMAIN,minigame3-normal.zijieapi.com,REJECT-DROP
+DOMAIN,minigame5-normal.zijieapi.com,REJECT-DROP
+DOMAIN,vas.snssdk.com,REJECT-DROP
+DOMAIN,effect.snssdk.com,REJECT-DROP
+DOMAIN,wallet.snssdk.com,REJECT-DROP
+DOMAIN,aweme.snssdk.com,REJECT-DROP
+
+# ================================
+# URL 关键词硬拦
+# ================================
+URL-REGEX,(?i)^https?:\/\/.*(pangolin|pangle|gromore|union_ad|ad_sdk|adsdk|advert|advertise|advertisement|splash|launch_ad|open_screen|feed_ad|reward_ad|inspire_ad|commercial|promotion|popup|float|pendant|benefit|welfare|task|coin|gold|cash|bonus|red_packet|hongbao|lottery|mini_game|minigame|wallet|mall).*,REJECT-DROP
+
+[Script]
+番茄红果广告硬清理 = type=http-response,pattern=^https?:\/\/(?:[^\/]+\.)?(?:fqnovel\.com|snssdk\.com|zijieapi\.com|amemv\.com|douyin\.com|douyinpic\.com|bytemaimg\.com)\/.*,requires-body=1,max-size=0,timeout=10,script-path=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/refs/heads/main/Scripts/fq-hongguo-killads.js
+
+[MITM]
+hostname = %APPEND% *.fqnovel.com, *.snssdk.com, *.zijieapi.com, *.amemv.com, *.douyin.com, *.douyinpic.com, *.bytemaimg.com
