@@ -2,6 +2,13 @@ name: Update Calendar
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "Calendar/calendar-data*.json"
+      - "Calendar/build_calendar.py"
+      - ".github/workflows/update-calendar.yml"
 
 permissions:
   contents: write
@@ -27,7 +34,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Build calendar files
-        run: python3 Calendar/scripts/build_calendar.py
+        run: python3 Calendar/build_calendar.py
 
       - name: Commit changes
         run: |
@@ -36,6 +43,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No calendar changes."
           else
-            git commit -m "chore(calendar): update subscription calendars"
+            git commit -m "chore(calendar): update subscription calendar"
             git push origin main
           fi
