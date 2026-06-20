@@ -5,7 +5,6 @@ on:
     branches:
       - main
     paths:
-      - "docs/**"
       - "Rule/**"
       - "Scripts/**"
       - "SurgeModule/**"
@@ -42,39 +41,33 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Build static index files
+      - name: Render static page
         run: |
           set -euo pipefail
-
           rm -rf /tmp/proxykit-pages
           mkdir -p /tmp/proxykit-pages
-          cp -a docs/. /tmp/proxykit-pages/
 
           python3 <<'PY'
           import json
           import subprocess
           from pathlib import Path
+          from html import escape
+          from urllib.parse import quote
 
-          categories = [
-              {
-                  "title": "规则",
-                  "desc": "分流规则、域名规则、IP 规则。",
-                  "icon": "R",
-                  "folder": "Rule",
-              },
-              {
-                  "title": "脚本",
-                  "desc": "JavaScript 脚本和响应改写。",
-                  "icon": "JS",
-                  "folder": "Scripts",
-              },
-              {
-                  "title": "模块",
-                  "desc": "Surge 模块和相关配置。",
-                  "icon": "M",
-                  "folder": "SurgeModule",
-              },
+          OWNER = "Luke-Lab666"
+          REPO = "ProxyKit"
+          BRANCH = "main"
+          RAW_BASE = f"https://raw.githubusercontent.com/{OWNER}/{REPO}/{BRANCH}/"
+          GH_BASE = f"https://github.com/{OWNER}/{REPO}/blob/{BRANCH}/"
+
+          CATEGORIES = [
+              {"key": "Rule", "title": "规则", "icon": "R"},
+              {"key": "Scripts", "title": "脚本", "icon": "JS"},
+              {"key": "SurgeModule", "title": "模块", "icon": "M"},
           ]
+
+          def quote_path(path: str) -> str:
+              return "/".join(quote(part) for part in path.split("/"))
 
           def last_commit_time(path: str) -> str:
               try:
@@ -86,11 +79,21 @@ jobs:
               except Exception:
                   return ""
 
-          output = []
+          def short_time(value: str) -> str:
+              if not value:
+                  return "更新时间未知"
+              value = value.replace("T", " ")
+              if "+" in value:
+                  value = value.split("+", 1)[0]
+              value = value.replace("Z", "")
+              return "更新：" + value[:16].replace("-", "/")
 
-          for category in categories:
-              folder = Path(category["folder"])
-              files = []
+          files = []
+          grouped = []
+
+          for category in CATEGORIES:
+              folder = Path(category["key"])
+              items = []
 
               if folder.exists():
                   for item in sorted(folder.rglob("*"), key=lambda p: p.as_posix().lower()):
@@ -98,44 +101,311 @@ jobs:
                           continue
 
                       path = item.as_posix()
-                      files.append({
+                      updated = last_commit_time(path)
+                      raw = RAW_BASE + quote_path(path)
+
+                      data = {
                           "name": item.name,
                           "path": path,
-                          "updatedAt": last_commit_time(path),
-                      })
+                          "folder": category["key"],
+                          "title": category["title"],
+                          "icon": "IP" if item.suffix == ".mmdb" else category["icon"],
+                          "updatedAt": updated,
+                          "updatedText": short_time(updated),
+                          "raw": raw,
+                          "github": GH_BASE + quote_path(path),
+                          "install": "surge:///install-module?url=" + raw if category["key"] == "SurgeModule" and item.name.endswith(".sgmodule") else "",
+                      }
 
-              output.append({
+                      files.append(data)
+                      items.append(data)
+
+              grouped.append({
                   "title": category["title"],
-                  "desc": category["desc"],
-                  "icon": category["icon"],
-                  "folder": category["folder"],
-                  "files": files,
+                  "folder": category["key"],
+                  "files": items,
               })
 
-          site = Path("/tmp/proxykit-pages")
-          site.mkdir(parents=True, exist_ok=True)
+          def file_card(file):
+              install = f'<a class="btn small" href="{escape(file["install"])}">安装</a>' if file["install"] else ""
+              return f"""
+                <article class="file-card" data-folder="{escape(file["folder"])}" data-search="{escape((file["name"] + " " + file["path"] + " " + file["title"]).lower())}">
+                  <div class="file-top">
+                    <span class="file-icon">{escape(file["icon"])}</span>
+                    <span class="file-type">{escape(file["title"])}</span>
+                  </div>
+                  <h3>{escape(file["name"])}</h3>
+                  <p class="path">{escape(file["path"])}</p>
+                  <p class="time">{escape(file["updatedText"])}</p>
+                  <div class="actions">
+                    <a class="btn dark" href="{escape(file["raw"])}" target="_blank" rel="noopener">原始链接</a>
+                    <a class="btn small" href="{escape(file["github"])}" target="_blank" rel="noopener">仓库页</a>
+                    {install}
+                    <button class="btn small" type="button" data-copy="{escape(file["raw"])}">复制</button>
+                  </div>
+                </article>
+              """
 
-          index_json = json.dumps(output, ensure_ascii=False, indent=2)
-          site.joinpath("files.json").write_text(index_json + "\n", encoding="utf-8")
-          site.joinpath("files.js").write_text(
-              "window.__PROXYKIT_INDEX__ = " + index_json + ";\n",
-              encoding="utf-8",
-          )
-          site.joinpath(".nojekyll").write_text("", encoding="utf-8")
+          cards_html = "\n".join(file_card(file) for file in files)
+          total = len(files)
 
-          total = sum(len(category["files"]) for category in output)
-          print(f"Indexed files: {total}")
+          index_html = f"""<!doctype html>
+          <html lang="zh-CN">
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+            <meta name="theme-color" content="#f4e2b7" />
+            <title>ProxyKit · 规则 / 脚本 / 模块</title>
+            <style>
+              :root {{
+                --ink:#111;
+                --muted:#7a7468;
+                --line:rgba(20,20,20,.10);
+              }}
+              * {{ box-sizing:border-box; }}
+              html {{ scroll-behavior:smooth; }}
+              body {{
+                margin:0;
+                min-height:100vh;
+                color:var(--ink);
+                font:15px/1.5 ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial,sans-serif;
+                background:linear-gradient(180deg,#fbf2dc 0%,#f2dfb4 48%,#e9cb8d 100%);
+                overflow-x:hidden;
+              }}
+              body::before,body::after {{
+                content:"";
+                position:fixed;
+                inset:-12%;
+                z-index:-1;
+                pointer-events:none;
+                filter:blur(18px);
+                animation:float 16s ease-in-out infinite alternate;
+              }}
+              body::before {{
+                background:
+                  radial-gradient(circle at 16% 18%,rgba(255,255,255,.78),transparent 30%),
+                  radial-gradient(circle at 78% 22%,rgba(245,199,89,.35),transparent 34%),
+                  radial-gradient(circle at 30% 82%,rgba(201,144,35,.18),transparent 30%);
+              }}
+              body::after {{
+                background:
+                  radial-gradient(circle at 72% 70%,rgba(255,247,223,.30),transparent 32%),
+                  linear-gradient(135deg,rgba(255,255,255,.13),rgba(219,166,51,.09));
+                animation-duration:22s;
+              }}
+              @keyframes float {{
+                from {{ transform:translate3d(-1%,-1%,0) scale(1); }}
+                to {{ transform:translate3d(1.2%,1%,0) scale(1.05); }}
+              }}
+              a {{ color:inherit; text-decoration:none; }}
+              button,input {{ font:inherit; }}
+              .shell {{ width:min(calc(100% - 32px),1120px); margin:0 auto; }}
+              .nav {{
+                margin-top:20px;
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                gap:12px;
+                padding:10px 12px 10px 20px;
+                border:1px solid rgba(255,255,255,.7);
+                border-radius:999px;
+                background:rgba(255,255,255,.58);
+                backdrop-filter:blur(18px);
+                box-shadow:0 14px 40px rgba(90,65,20,.09);
+              }}
+              .brand {{ display:flex; align-items:center; gap:12px; font-size:22px; font-weight:950; letter-spacing:-.06em; }}
+              .mark {{ width:36px;height:36px;border-radius:13px;background:#111;color:#fff;display:grid;place-items:center;font-weight:950;font-size:15px; }}
+              .repo {{ border-radius:999px;background:#111;color:#fff;font-weight:900;padding:12px 18px;box-shadow:0 14px 32px rgba(0,0,0,.18); }}
+              .hero {{
+                margin-top:22px;
+                min-height:220px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                text-align:center;
+                border:1px solid rgba(255,255,255,.72);
+                border-radius:32px;
+                background:linear-gradient(135deg,rgba(255,252,243,.92),rgba(244,221,169,.88));
+                box-shadow:0 28px 80px rgba(133,102,38,.14);
+                position:relative;
+                overflow:hidden;
+              }}
+              .hero::after {{
+                content:"";
+                position:absolute;
+                left:-8%; right:-8%; bottom:-24%;
+                height:68%;
+                background:radial-gradient(90% 100% at 50% 100%,rgba(255,247,223,.36),rgba(232,185,73,.15) 42%,transparent 72%);
+                filter:blur(16px);
+                animation:float 10s ease-in-out infinite alternate;
+              }}
+              .hero-inner {{ position:relative; z-index:1; padding:26px 18px; }}
+              h1 {{ margin:0; font-size:clamp(54px,8vw,104px); line-height:.9; letter-spacing:-.09em; font-weight:950; }}
+              .caps {{ display:flex; justify-content:center; flex-wrap:wrap; gap:12px; margin-top:20px; }}
+              .cap {{
+                display:inline-flex; align-items:center; gap:10px;
+                min-height:42px; padding:0 16px;
+                border-radius:999px;
+                border:1px solid rgba(255,255,255,.7);
+                background:rgba(255,255,255,.60);
+                box-shadow:0 16px 36px rgba(0,0,0,.07);
+                font-weight:900;
+              }}
+              .dot {{
+                width:9px;height:9px;border-radius:50%;
+                background:linear-gradient(135deg,#f9dd8a,#c9942e);
+                box-shadow:0 0 0 7px rgba(201,148,46,.14),0 0 22px rgba(201,148,46,.32);
+                animation:pulse 1.8s ease-in-out infinite;
+              }}
+              @keyframes pulse {{ 50% {{ transform:scale(1.12); opacity:.72; }} }}
+              .section {{ padding:22px 0 44px; }}
+              .title {{ font-size:42px; line-height:1; letter-spacing:-.08em; font-weight:950; margin:0 0 22px; }}
+              .chips {{ display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px; }}
+              .chip {{
+                border:1px solid var(--line); background:rgba(255,255,255,.64);
+                border-radius:999px; padding:12px 18px; font-weight:950;
+              }}
+              .chip.active {{ background:#111;color:#fff;border-color:#111; }}
+              .search {{
+                display:flex; align-items:center; gap:12px;
+                border:1px solid var(--line);
+                background:rgba(255,255,255,.65);
+                border-radius:999px;
+                padding:14px 18px;
+                margin-bottom:22px;
+              }}
+              .search input {{ border:0; outline:0; background:transparent; width:100%; color:#555; }}
+              .meta {{ margin:0 0 16px; color:var(--muted); font-weight:850; }}
+              .grid {{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }}
+              .file-card {{
+                min-height:190px;
+                border:1px solid rgba(20,20,20,.08);
+                border-radius:24px;
+                background:rgba(255,255,255,.72);
+                box-shadow:0 18px 44px rgba(70,48,12,.08);
+                padding:18px;
+                display:flex;
+                flex-direction:column;
+              }}
+              .file-top {{ display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }}
+              .file-icon {{ width:44px;height:44px;border:1px solid rgba(0,0,0,.13);border-radius:16px;display:grid;place-items:center;font-weight:950;background:rgba(255,255,255,.52); }}
+              .file-type {{ border-radius:999px;background:rgba(238,233,222,.75);padding:7px 11px;color:#8a8172;font-weight:900; }}
+              .file-card h3 {{ margin:18px 0 6px; font-size:22px; letter-spacing:-.05em; overflow-wrap:anywhere; }}
+              .path,.time {{ margin:0; color:#817a6d; font-weight:750; overflow-wrap:anywhere; }}
+              .time {{ margin-top:8px; font-size:12px; }}
+              .actions {{ display:flex; flex-wrap:wrap; gap:8px; margin-top:auto; padding-top:18px; }}
+              .btn {{ border:1px solid var(--line); background:#fff; border-radius:999px; padding:8px 12px; font-weight:950; cursor:pointer; }}
+              .btn.dark {{ background:#111;color:#fff;border-color:#111; }}
+              .btn.small {{ font-size:13px; }}
+              .empty {{ display:none; padding:28px; border:1px dashed var(--line); border-radius:22px; background:rgba(255,255,255,.52); color:var(--muted); font-weight:850; text-align:center; }}
+              .footer {{ padding:26px 0 38px; color:#817a6d; font-weight:800; border-top:1px solid rgba(20,20,20,.08); }}
+              .hidden {{ display:none; }}
+              @media (max-width:860px) {{
+                .grid {{ grid-template-columns:1fr; }}
+                .hero {{ min-height:210px; }}
+                .title {{ font-size:38px; }}
+                .repo {{ padding:11px 15px; }}
+              }}
+            </style>
+          </head>
+          <body>
+            <header class="shell nav">
+              <a class="brand" href="./"><span class="mark">PK</span><span>ProxyKit</span></a>
+              <a class="repo" href="https://github.com/{OWNER}/{REPO}" target="_blank" rel="noopener">查看仓库</a>
+            </header>
 
-          index_html = site / "index.html"
-          if not index_html.exists():
-              raise SystemExit("docs/index.html 不存在，停止部署。")
+            <main>
+              <section class="shell hero">
+                <div class="hero-inner">
+                  <h1>ProxyKit</h1>
+                  <div class="caps">
+                    <span class="cap"><span class="dot"></span>适配：Surge</span>
+                    <span class="cap"><span class="dot"></span>更新：部分自动</span>
+                  </div>
+                </div>
+              </section>
 
-          html = index_html.read_text(encoding="utf-8")
-          if "files.js" not in html or "loadFromExternalIndex" not in html:
-              raise SystemExit(
-                  "docs/index.html 不是 v12 files.js 版本。"
-                  "请用 proxykit-h5-golden-fluid-v12-files-js.html 覆盖 docs/index.html。"
-              )
+              <section class="shell section">
+                <h2 class="title">文件列表</h2>
+
+                <div class="chips">
+                  <button class="chip active" data-filter="all">全部</button>
+                  <button class="chip" data-filter="Rule">规则</button>
+                  <button class="chip" data-filter="Scripts">脚本</button>
+                  <button class="chip" data-filter="SurgeModule">模块</button>
+                </div>
+
+                <label class="search">
+                  <span>⌕</span>
+                  <input id="search" type="search" placeholder="筛选当前列表…" />
+                </label>
+
+                <p class="meta" id="meta">共 {total} 项</p>
+                <div class="grid" id="grid">{cards_html}</div>
+                <div class="empty" id="empty">没找到，换个关键词试试。</div>
+              </section>
+            </main>
+
+            <footer class="shell footer">ProxyKit · 代理配置集合</footer>
+
+            <script>
+              const cards = Array.from(document.querySelectorAll('.file-card'));
+              const chips = Array.from(document.querySelectorAll('.chip'));
+              const input = document.getElementById('search');
+              const meta = document.getElementById('meta');
+              const empty = document.getElementById('empty');
+              let active = 'all';
+
+              function applyFilter() {{
+                const query = input.value.trim().toLowerCase();
+                let count = 0;
+
+                cards.forEach(card => {{
+                  const okFolder = active === 'all' || card.dataset.folder === active;
+                  const okSearch = !query || card.dataset.search.includes(query);
+                  const show = okFolder && okSearch;
+                  card.classList.toggle('hidden', !show);
+                  if (show) count++;
+                }});
+
+                meta.textContent = `共 ${{count}} 项`;
+                empty.style.display = count ? 'none' : 'block';
+              }}
+
+              chips.forEach(chip => {{
+                chip.addEventListener('click', () => {{
+                  active = chip.dataset.filter;
+                  chips.forEach(item => item.classList.toggle('active', item === chip));
+                  applyFilter();
+                }});
+              }});
+
+              input.addEventListener('input', applyFilter);
+
+              document.addEventListener('click', async event => {{
+                const btn = event.target.closest('[data-copy]');
+                if (!btn) return;
+
+                try {{
+                  await navigator.clipboard.writeText(btn.dataset.copy);
+                  btn.textContent = '已复制';
+                  setTimeout(() => btn.textContent = '复制', 1200);
+                }} catch {{
+                  btn.textContent = '复制失败';
+                  setTimeout(() => btn.textContent = '复制', 1200);
+                }}
+              }});
+            </script>
+          </body>
+          </html>"""
+
+          out = Path("/tmp/proxykit-pages")
+          out.mkdir(parents=True, exist_ok=True)
+          out.joinpath("index.html").write_text(index_html, encoding="utf-8")
+          out.joinpath("files.json").write_text(json.dumps(grouped, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          out.joinpath(".nojekyll").write_text("", encoding="utf-8")
+
+          print(f"Rendered {total} files into static HTML.")
           PY
 
       - name: Publish to gh-pages branch
@@ -147,7 +417,7 @@ jobs:
           cp -a /tmp/proxykit-pages/. .
 
           git add -A
-          git commit -m "deploy: update GitHub Pages" || {
+          git commit -m "deploy: render static GitHub Pages" || {
             echo "No changes to deploy"
             exit 0
           }
