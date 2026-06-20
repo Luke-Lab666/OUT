@@ -1,551 +1,1265 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ProxyKit</title>
-  <meta name="description" content="Personal proxy rules, scripts and modules." />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#f4f1eb" />
+  <meta name="description" content="ProxyKit · 个人代理配置集合。Rules, Scripts, Surge Modules 自动索引。" />
+  <title>ProxyKit · Rules / Scripts / Modules</title>
   <style>
-    :root {
-      --bg: #f8fafc;
-      --card: rgba(255, 255, 255, 0.78);
-      --text: #0f172a;
-      --muted: #64748b;
-      --border: rgba(148, 163, 184, 0.28);
-      --green: #22c55e;
-      --blue: #3b82f6;
-      --violet: #8b5cf6;
-      --orange: #f97316;
-      --shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
+    :root{
+      --bg:#f4f1eb;
+      --paper:#ffffff;
+      --ink:#151515;
+      --muted:#77746f;
+      --line:rgba(21,21,21,.09);
+      --line-strong:rgba(21,21,21,.14);
+      --soft:#ebe7df;
+      --soft-2:#f7f5f0;
+      --glass:rgba(255,255,255,.72);
+      --shadow:0 34px 90px rgba(22,22,22,.12);
+      --shadow-soft:0 18px 42px rgba(22,22,22,.08);
+      --radius-xl:34px;
+      --radius-lg:24px;
+      --radius-md:18px;
+      --radius-sm:12px;
+      --max:1180px;
+      --ease:cubic-bezier(.2,.8,.2,1);
     }
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family:
-        ui-sans-serif,
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
-      color: var(--text);
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      color:var(--ink);
       background:
-        radial-gradient(circle at 20% 10%, rgba(249, 115, 22, 0.16), transparent 28%),
-        radial-gradient(circle at 80% 0%, rgba(59, 130, 246, 0.16), transparent 30%),
-        radial-gradient(circle at 50% 90%, rgba(139, 92, 246, 0.12), transparent 30%),
-        var(--bg);
+        radial-gradient(circle at 10% 10%, rgba(255,255,255,.9), transparent 24rem),
+        radial-gradient(circle at 86% 16%, rgba(219,207,188,.65), transparent 25rem),
+        linear-gradient(180deg,var(--bg),#fbfaf7 70%);
+      font:15px/1.55 ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display","SF Pro Text","Segoe UI", Roboto, "PingFang SC","Hiragino Sans GB","Microsoft YaHei", Arial, sans-serif;
+      min-height:100vh;
+      overflow-x:hidden;
     }
-    a {
-      color: inherit;
-      text-decoration: none;
+
+    a{color:inherit;text-decoration:none}
+    button,input,select{font:inherit}
+    button{cursor:pointer}
+    ::selection{background:#151515;color:#fff}
+
+    .shell{
+      width:min(calc(100% - 32px), var(--max));
+      margin:0 auto;
     }
-    button,
-    summary {
-      -webkit-tap-highlight-color: transparent;
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:50;
+      padding:20px 0 10px;
+      backdrop-filter:saturate(1.2) blur(18px);
+      -webkit-backdrop-filter:saturate(1.2) blur(18px);
     }
-    .page {
-      width: min(1080px, calc(100% - 32px));
-      margin: 0 auto;
-      padding: 56px 0 36px;
+
+    .nav{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+      min-height:58px;
+      border:1px solid rgba(255,255,255,.62);
+      background:rgba(255,255,255,.56);
+      box-shadow:0 10px 30px rgba(0,0,0,.045);
+      border-radius:999px;
+      padding:9px 10px 9px 22px;
     }
-    .hero {
-      position: relative;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      border-radius: 32px;
-      padding: 56px 28px;
-      text-align: center;
-      background: var(--card);
-      backdrop-filter: blur(22px);
-      box-shadow: var(--shadow);
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      font-weight:900;
+      letter-spacing:-.05em;
+      font-size:22px;
     }
-    .hero::before {
-      content: "";
-      position: absolute;
-      inset: 0;
+
+    .brand-mark{
+      width:34px;height:34px;
+      display:grid;place-items:center;
+      border-radius:12px;
+      color:#fff;
+      background:#151515;
+      font-size:15px;
+      letter-spacing:-.08em;
+      box-shadow:0 10px 22px rgba(0,0,0,.16);
+    }
+
+    .navlinks{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:#42413f;
+      font-weight:700;
+      font-size:13px;
+    }
+
+    .navlinks a{
+      padding:10px 12px;
+      border-radius:999px;
+      transition:.24s var(--ease);
+    }
+
+    .navlinks a:hover{
+      background:rgba(0,0,0,.06);
+      transform:translateY(-1px);
+    }
+
+    .nav-cta{
+      border:0;
+      border-radius:999px;
+      padding:12px 18px;
+      background:#111;
+      color:#fff;
+      font-weight:850;
+      box-shadow:0 12px 28px rgba(0,0,0,.17);
+      transition:.24s var(--ease);
+    }
+
+    .nav-cta:hover{transform:translateY(-1px);box-shadow:0 16px 34px rgba(0,0,0,.22)}
+
+    .hero{
+      position:relative;
+      margin-top:18px;
+      min-height:520px;
+      border-radius:var(--radius-xl);
+      overflow:hidden;
       background:
-        linear-gradient(120deg, rgba(249, 115, 22, 0.12), transparent 36%),
-        linear-gradient(240deg, rgba(59, 130, 246, 0.12), transparent 36%);
-      pointer-events: none;
+        linear-gradient(115deg, rgba(255,255,255,.68), rgba(237,229,217,.76)),
+        radial-gradient(circle at 80% 36%, rgba(241,198,118,.68), transparent 19rem),
+        radial-gradient(circle at 18% 28%, rgba(182,188,179,.44), transparent 22rem);
+      box-shadow:var(--shadow);
+      border:1px solid rgba(255,255,255,.72);
     }
-    .hero > * {
-      position: relative;
-      z-index: 1;
+
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.18) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255,255,255,.18) 1px, transparent 1px);
+      background-size:48px 48px;
+      mask-image:linear-gradient(180deg, rgba(0,0,0,.55), transparent 74%);
+      pointer-events:none;
     }
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 8px 14px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1;
-      background: rgba(255, 255, 255, 0.62);
+
+    .hero-art{
+      position:absolute;
+      right:-18px;
+      bottom:-56px;
+      width:min(52vw,560px);
+      height:390px;
+      transform:skewX(-10deg) rotate(-3deg);
+      border-radius:30px;
+      background:
+        linear-gradient(90deg, transparent 0 7%, rgba(255,255,255,.55) 7% 9%, transparent 9% 18%),
+        repeating-linear-gradient(90deg, rgba(245,180,76,.8) 0 32px, rgba(214,126,56,.8) 32px 58px, rgba(232,200,126,.85) 58px 92px);
+      box-shadow:-30px 35px 70px rgba(88,61,28,.19);
+      opacity:.9;
     }
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: var(--green);
-      box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.12);
-      flex-shrink: 0;
+
+    .hero-art::after{
+      content:"";
+      position:absolute;
+      inset:28px;
+      border:1px solid rgba(0,0,0,.1);
+      border-radius:20px;
+      background:linear-gradient(120deg, rgba(255,255,255,.24), transparent);
     }
-    h1 {
-      margin: 22px 0 10px;
-      font-size: clamp(42px, 8vw, 84px);
-      line-height: 0.95;
-      letter-spacing: -0.07em;
+
+    .hero-inner{
+      position:relative;
+      z-index:2;
+      padding:82px 80px 132px;
+      max-width:810px;
     }
-    .subtitle {
-      margin: 0 auto;
-      max-width: 680px;
-      color: var(--muted);
-      font-size: clamp(16px, 2.8vw, 20px);
-      line-height: 1.8;
+
+    .eyebrow{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      color:#6c6963;
+      font-weight:800;
+      letter-spacing:-.02em;
+      margin-bottom:18px;
     }
-    .badges {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 26px;
+
+    .eyebrow::before{
+      content:"";
+      width:26px;height:2px;
+      border-radius:2px;
+      background:#99958e;
     }
-    .badge {
-      display: inline-flex;
-      overflow: hidden;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: #fff;
-      font-size: 13px;
-      line-height: 1;
+
+    h1{
+      margin:0;
+      font-size:clamp(58px,8.2vw,116px);
+      line-height:.88;
+      letter-spacing:-.085em;
+      font-weight:950;
     }
-    .badge span {
-      padding: 9px 12px;
+
+    .hero-copy{
+      width:min(620px,100%);
+      margin:28px 0 0;
+      color:#5f5b55;
+      font-size:18px;
+      letter-spacing:-.02em;
     }
-    .badge span:first-child {
-      color: #fff;
-      background: #111827;
+
+    .hero-actions{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:12px;
+      margin-top:34px;
     }
-    .badge.green span:last-child {
-      color: #fff;
-      background: var(--green);
+
+    .btn{
+      border:1px solid var(--line-strong);
+      background:#fff;
+      min-height:48px;
+      padding:0 18px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:9px;
+      font-weight:850;
+      transition:.24s var(--ease);
+      box-shadow:0 8px 22px rgba(0,0,0,.045);
     }
-    .badge.blue span:last-child {
-      color: #fff;
-      background: var(--blue);
+
+    .btn:hover{
+      transform:translateY(-2px);
+      box-shadow:0 16px 34px rgba(0,0,0,.1);
     }
-    .actions {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 28px;
+
+    .btn.primary{
+      background:#111;
+      color:#fff;
+      border-color:#111;
+      box-shadow:0 18px 36px rgba(0,0,0,.18);
     }
-    .button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 46px;
-      padding: 0 18px;
-      border-radius: 999px;
-      font-weight: 700;
-      border: 1px solid var(--border);
-      background: #fff;
-      box-shadow: 0 12px 36px rgba(15, 23, 42, 0.06);
-      transition:
-        transform 0.18s ease,
-        border-color 0.18s ease,
-        background 0.18s ease;
+
+    .status-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:28px;
     }
-    .button:hover {
-      transform: translateY(-2px);
-      border-color: rgba(15, 23, 42, 0.2);
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid rgba(255,255,255,.66);
+      background:rgba(255,255,255,.46);
+      padding:8px 12px;
+      border-radius:999px;
+      color:#4f4c47;
+      font-weight:750;
+      font-size:13px;
+      backdrop-filter:blur(14px);
     }
-    .button.primary {
-      color: #fff;
-      border-color: #0f172a;
-      background: #0f172a;
+
+    .dot{
+      width:8px;height:8px;border-radius:50%;
+      background:#2c2c2c;
+      box-shadow:0 0 0 5px rgba(44,44,44,.08);
     }
-    .menu {
-      margin-top: 28px;
-      display: grid;
-      gap: 16px;
+
+    .search-card{
+      position:relative;
+      z-index:3;
+      width:min(860px,calc(100% - 56px));
+      margin:-78px auto 0;
+      border-radius:24px;
+      background:rgba(255,255,255,.88);
+      border:1px solid rgba(255,255,255,.74);
+      box-shadow:0 28px 80px rgba(0,0,0,.12);
+      backdrop-filter:blur(18px);
+      -webkit-backdrop-filter:blur(18px);
+      padding:18px;
     }
-    details.category {
-      overflow: hidden;
-      border: 1px solid var(--border);
-      border-radius: 28px;
-      background: rgba(255, 255, 255, 0.78);
-      backdrop-filter: blur(18px);
-      box-shadow: 0 16px 48px rgba(15, 23, 42, 0.06);
+
+    .search-grid{
+      display:grid;
+      grid-template-columns:1fr 1.1fr auto;
+      gap:14px;
+      align-items:end;
     }
-    summary {
-      list-style: none;
-      cursor: pointer;
+
+    .field{
+      min-width:0;
+      padding:0 18px;
+      border-right:1px solid var(--line);
     }
-    summary::-webkit-details-marker {
-      display: none;
+
+    .field:last-of-type{border-right:0}
+
+    .label{
+      display:block;
+      margin-bottom:8px;
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:-.055em;
     }
-    .category-head {
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      gap: 20px;
-      align-items: center;
-      padding: 26px;
+
+    .input-wrap{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-height:32px;
+      color:#8a867e;
     }
-    .icon {
-      width: 58px;
-      height: 58px;
-      display: grid;
-      place-items: center;
-      border-radius: 20px;
-      color: #fff;
-      font-size: 22px;
-      font-weight: 800;
-      flex-shrink: 0;
+
+    input,select{
+      width:100%;
+      border:0;
+      outline:0;
+      background:transparent;
+      color:#4a4742;
+      min-width:0;
     }
-    .icon.rules {
-      background: var(--orange);
+
+    input::placeholder{color:#a4a09a;text-decoration:underline;text-underline-offset:3px}
+    select{appearance:none;-webkit-appearance:none;font-weight:700;color:#65615b}
+
+    .search-submit{
+      width:78px;
+      height:78px;
+      border:0;
+      border-radius:24px;
+      background:#111;
+      color:#fff;
+      display:grid;
+      place-items:center;
+      box-shadow:0 18px 35px rgba(0,0,0,.22);
+      transition:.24s var(--ease);
     }
-    .icon.scripts {
-      background: var(--blue);
+
+    .search-submit:hover{transform:translateY(-2px) scale(1.02)}
+
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:14px;
+      margin:34px auto 0;
+      width:min(860px,calc(100% - 56px));
     }
-    .icon.modules {
-      background: var(--violet);
+
+    .stat{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.54);
+      border-radius:20px;
+      padding:20px;
+      box-shadow:var(--shadow-soft);
     }
-    .category-title {
-      margin: 0;
-      font-size: 28px;
-      line-height: 1.1;
-      letter-spacing: -0.04em;
+
+    .stat strong{
+      display:block;
+      font-size:30px;
+      letter-spacing:-.07em;
+      line-height:1;
     }
-    .category-desc {
-      margin: 6px 0 0;
-      color: var(--muted);
-      line-height: 1.6;
+
+    .stat span{
+      display:block;
+      margin-top:7px;
+      color:#79756f;
+      font-weight:750;
+      font-size:13px;
     }
-    .chevron {
-      width: 42px;
-      height: 42px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.06);
-      color: var(--muted);
-      flex-shrink: 0;
+
+    .section{
+      padding:72px 0 36px;
     }
-    .chevron::before {
-      content: "";
-      width: 9px;
-      height: 9px;
-      border-right: 2px solid currentColor;
-      border-bottom: 2px solid currentColor;
-      transform: translateY(-2px) rotate(45deg);
-      transition: transform 0.2s ease;
+
+    .section-head{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:20px;
+      margin-bottom:24px;
     }
-    details[open] .chevron::before {
-      transform: translateY(2px) rotate(225deg);
+
+    .section-title{
+      margin:0;
+      font-size:34px;
+      line-height:1;
+      letter-spacing:-.07em;
+      font-weight:950;
     }
-    .file-list {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      padding: 0 26px 26px;
+
+    .section-sub{
+      margin:10px 0 0;
+      color:#77736d;
+      font-weight:650;
     }
-    .file {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 12px;
-      align-items: center;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 14px;
-      background: rgba(255, 255, 255, 0.72);
-      transition:
-        transform 0.18s ease,
-        border-color 0.18s ease,
-        background 0.18s ease;
+
+    .tool-row{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:18px;
     }
-    .file:hover {
-      transform: translateY(-2px);
-      border-color: rgba(15, 23, 42, 0.2);
-      background: rgba(255, 255, 255, 0.92);
+
+    .chips{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
     }
-    .file-title {
-      display: block;
-      font-weight: 780;
-      letter-spacing: -0.02em;
-      word-break: break-word;
+
+    .chip{
+      border:1px solid var(--line-strong);
+      background:rgba(255,255,255,.64);
+      color:#3f3c38;
+      border-radius:999px;
+      padding:10px 14px;
+      font-weight:850;
+      transition:.22s var(--ease);
     }
-    .file-path {
-      display: block;
-      margin-top: 4px;
-      color: var(--muted);
-      font-size: 12px;
-      word-break: break-all;
+
+    .chip:hover{transform:translateY(-1px)}
+    .chip.active{
+      background:#111;
+      color:#fff;
+      border-color:#111;
+      box-shadow:0 14px 30px rgba(0,0,0,.17);
     }
-    .file-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
+
+    .mini-search{
+      width:min(360px,100%);
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.72);
+      border-radius:999px;
+      padding:12px 16px;
+      display:flex;
+      align-items:center;
+      gap:10px;
     }
-    .mini {
-      height: 38px;
-      min-width: 82px;
-      padding: 0 14px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: #fff;
-      color: var(--text);
-      font-weight: 700;
-      font-size: 13px;
-      cursor: pointer;
-      white-space: nowrap;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      line-height: 1;
+
+    .category-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:18px;
+      margin-bottom:28px;
     }
-    .mini.raw {
-      color: #fff;
-      border-color: #0f172a;
-      background: #0f172a;
+
+    .category-card{
+      border:1px solid var(--line);
+      border-radius:24px;
+      background:rgba(255,255,255,.72);
+      box-shadow:var(--shadow-soft);
+      padding:22px;
+      min-height:152px;
+      cursor:pointer;
+      transition:.24s var(--ease);
+      position:relative;
+      overflow:hidden;
     }
-    .empty {
-      padding: 0 26px 26px;
-      color: var(--muted);
-      line-height: 1.8;
+
+    .category-card::after{
+      content:"";
+      position:absolute;
+      width:160px;height:160px;
+      border-radius:50%;
+      right:-64px;bottom:-72px;
+      background:rgba(0,0,0,.045);
+      transition:.24s var(--ease);
     }
-    .note {
-      margin-top: 18px;
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 24px;
-      background: rgba(255, 255, 255, 0.72);
-      backdrop-filter: blur(18px);
+
+    .category-card:hover{
+      transform:translateY(-4px);
+      box-shadow:0 26px 60px rgba(0,0,0,.1);
+      border-color:rgba(0,0,0,.18);
     }
-    .note h2 {
-      margin: 0 0 12px;
-      font-size: 22px;
-      line-height: 1.2;
-      letter-spacing: -0.04em;
+
+    .category-card.active{
+      background:#111;
+      color:#fff;
+      border-color:#111;
     }
-    .note p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.8;
+
+    .category-card.active .cat-desc,
+    .category-card.active .cat-count{color:rgba(255,255,255,.7)}
+
+    .cat-icon{
+      width:44px;height:44px;
+      border:1px solid currentColor;
+      border-radius:16px;
+      display:grid;
+      place-items:center;
+      font-weight:950;
+      letter-spacing:-.08em;
+      margin-bottom:22px;
     }
-    footer {
-      padding: 28px 0 0;
-      text-align: center;
-      color: var(--muted);
-      font-size: 13px;
+
+    .cat-title{
+      margin:0;
+      font-size:20px;
+      font-weight:950;
+      letter-spacing:-.055em;
     }
-    @media (max-width: 760px) {
-      .page {
-        width: min(100% - 24px, 1080px);
-        padding-top: 28px;
-      }
-      .hero {
-        border-radius: 26px;
-        padding: 42px 20px;
-      }
-      .actions {
-        flex-direction: column;
-      }
-      .button {
-        width: 100%;
-      }
-      .category-head {
-        grid-template-columns: auto 1fr auto;
-        gap: 14px;
-        padding: 22px;
-      }
-      .icon {
-        width: 52px;
-        height: 52px;
-        border-radius: 18px;
-        font-size: 20px;
-      }
-      .category-title {
-        font-size: 24px;
-      }
-      .category-desc {
-        font-size: 14px;
-      }
-      .file-list {
-        grid-template-columns: 1fr;
-        padding: 0 18px 22px;
-      }
-      .file {
-        grid-template-columns: 1fr;
-      }
-      .file-actions {
-        width: 100%;
-      }
-      .mini {
-        flex: 1;
-        min-width: 0;
-      }
+
+    .cat-desc{
+      margin:6px 0 0;
+      color:#7d7972;
+      font-weight:650;
+      font-size:13px;
+    }
+
+    .cat-count{
+      position:absolute;
+      right:18px;
+      top:18px;
+      color:#9b958c;
+      font-weight:900;
+      border-radius:999px;
+      background:rgba(0,0,0,.045);
+      padding:6px 10px;
+      font-size:12px;
+    }
+
+    .list-meta{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      color:#77736d;
+      font-weight:750;
+      margin-bottom:14px;
+      min-height:28px;
+    }
+
+    .file-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:16px;
+    }
+
+    .file-card{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.78);
+      border-radius:22px;
+      padding:18px;
+      min-height:186px;
+      display:flex;
+      flex-direction:column;
+      box-shadow:0 14px 36px rgba(0,0,0,.055);
+      transition:.22s var(--ease);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .file-card:hover{
+      transform:translateY(-3px);
+      box-shadow:0 22px 54px rgba(0,0,0,.1);
+      border-color:rgba(0,0,0,.16);
+    }
+
+    .file-top{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-start;
+    }
+
+    .file-badge{
+      width:42px;height:42px;
+      border-radius:15px;
+      border:1px solid rgba(0,0,0,.13);
+      display:grid;
+      place-items:center;
+      font-weight:950;
+      letter-spacing:-.08em;
+      background:#fbfaf7;
+      flex:0 0 auto;
+    }
+
+    .file-folder{
+      color:#9b968e;
+      font-size:12px;
+      font-weight:900;
+      border-radius:999px;
+      background:#f3f0ea;
+      padding:7px 9px;
+      max-width:118px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .file-name{
+      margin:18px 0 6px;
+      font-size:17px;
+      line-height:1.18;
+      letter-spacing:-.04em;
+      font-weight:950;
+      overflow-wrap:anywhere;
+    }
+
+    .file-path{
+      color:#858079;
+      font-size:13px;
+      font-weight:650;
+      overflow:hidden;
+      display:-webkit-box;
+      -webkit-line-clamp:2;
+      -webkit-box-orient:vertical;
+      overflow-wrap:anywhere;
+    }
+
+    .file-actions{
+      margin-top:auto;
+      padding-top:18px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .small-btn{
+      border:1px solid var(--line-strong);
+      background:#fff;
+      border-radius:999px;
+      min-height:34px;
+      padding:0 11px;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:12px;
+      font-weight:900;
+      transition:.2s var(--ease);
+    }
+
+    .small-btn:hover{
+      transform:translateY(-1px);
+      border-color:rgba(0,0,0,.24);
+    }
+
+    .small-btn.dark{
+      background:#111;
+      border-color:#111;
+      color:#fff;
+    }
+
+    .empty{
+      display:none;
+      border:1px dashed rgba(0,0,0,.18);
+      background:rgba(255,255,255,.55);
+      border-radius:24px;
+      padding:38px;
+      text-align:center;
+      color:#77736d;
+      font-weight:750;
+    }
+
+    .empty.show{display:block}
+
+    .skeleton{
+      position:relative;
+      overflow:hidden;
+    }
+
+    .skeleton::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(90deg, transparent, rgba(255,255,255,.75), transparent);
+      transform:translateX(-100%);
+      animation:shine 1.1s infinite;
+    }
+
+    @keyframes shine{to{transform:translateX(100%)}}
+
+    .footer{
+      margin-top:44px;
+      padding:34px 0 42px;
+      color:#7b776f;
+      border-top:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+      font-weight:700;
+    }
+
+    .toast{
+      position:fixed;
+      z-index:90;
+      left:50%;
+      bottom:28px;
+      transform:translateX(-50%) translateY(20px);
+      opacity:0;
+      pointer-events:none;
+      border:1px solid rgba(255,255,255,.18);
+      background:#111;
+      color:#fff;
+      border-radius:999px;
+      padding:12px 16px;
+      font-weight:850;
+      box-shadow:0 18px 44px rgba(0,0,0,.24);
+      transition:.24s var(--ease);
+    }
+
+    .toast.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(0);
+    }
+
+    .icon{width:20px;height:20px;display:block;stroke:currentColor;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+    .muted{color:#827e76}
+
+    @media (max-width:900px){
+      .navlinks{display:none}
+      .hero{min-height:560px}
+      .hero-inner{padding:62px 34px 128px}
+      .hero-art{width:560px;right:-260px;opacity:.6}
+      .search-grid{grid-template-columns:1fr}
+      .field{border-right:0;border-bottom:1px solid var(--line);padding:8px 4px 14px}
+      .field:last-of-type{border-bottom:0}
+      .search-submit{width:100%;height:58px;border-radius:18px}
+      .stats,.category-grid,.file-grid{grid-template-columns:1fr}
+      .section-head,.tool-row,.footer{align-items:flex-start;flex-direction:column}
+      .mini-search{width:100%}
+    }
+
+    @media (max-width:520px){
+      .shell{width:min(calc(100% - 22px), var(--max))}
+      .topbar{padding-top:12px}
+      .nav{padding-left:14px}
+      .brand{font-size:19px}
+      .brand-mark{width:32px;height:32px}
+      .nav-cta{padding:10px 13px}
+      .hero{border-radius:26px;margin-top:10px;min-height:500px}
+      .hero-inner{padding:42px 22px 116px}
+      .eyebrow{font-size:13px}
+      h1{font-size:56px}
+      .hero-copy{font-size:15px}
+      .hero-actions{gap:9px}
+      .btn{min-height:44px;padding:0 14px}
+      .search-card,.stats{width:calc(100% - 24px)}
+      .search-card{margin-top:-68px;padding:14px;border-radius:20px}
+      .stat{padding:16px}
+      .section{padding-top:52px}
+      .section-title{font-size:30px}
+      .file-card{min-height:170px}
     }
   </style>
 </head>
 <body>
-  <main class="page">
-    <section class="hero">
-      <div class="eyebrow">
-        <span class="dot"></span>
-        随缘维护
-      </div>
-  <h1>ProxyKit</h1>
-  <p class="subtitle">
-    本人自用的代理配置集合。<br />
-    轻量整理规则、脚本与模块配置，按需维护。
-  </p>
-  <div class="badges">
-    <div class="badge green">
-      <span>状态</span>
-      <span>随缘维护</span>
+  <header class="topbar">
+    <div class="shell nav">
+      <a class="brand" href="#top" aria-label="ProxyKit Home">
+        <span class="brand-mark">PK</span>
+        <span>ProxyKit</span>
+      </a>
+      <nav class="navlinks" aria-label="Primary Navigation">
+        <a href="#rules" data-jump="Rule">Rules</a>
+        <a href="#scripts" data-jump="Scripts">Scripts</a>
+        <a href="#modules" data-jump="SurgeModule">Modules</a>
+        <a href="https://github.com/Luke-Lab666/ProxyKit" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+      <a class="nav-cta" href="https://github.com/Luke-Lab666/ProxyKit" target="_blank" rel="noopener">View Repo</a>
     </div>
-    <div class="badge blue">
-      <span>软件</span>
-      <span>Surge</span>
-    </div>
-  </div>
-  <div class="actions">
-    <a class="button primary" href="https://github.com/Luke-Lab666/ProxyKit" target="_blank" rel="noopener">
-      查看仓库
-    </a>
-  </div>
-</section>
-<section class="menu" id="menu"></section>
-<section class="note">
-  <h2>📝 Note</h2>
-  <p>
-    本仓库主要用于个人网络环境的配置备份与日常维护。内容会根据实际使用情况调整，不作为通用方案推荐。
-  </p>
-</section>
-<footer>
-  ProxyKit · 个人代理配置集合
-</footer>
-  </main>
-  <script>
-    const repo = "Luke-Lab666/ProxyKit";
-    const branch = "main";
-    const menu = document.getElementById("menu");
-    const escapeHtml = (value) => {
-      return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    };
-    const encodePath = (path) => {
-      return String(path).split("/").map(encodeURIComponent).join("/");
-    };
-    const getRawUrl = (path) => {
-      return `https://raw.githubusercontent.com/${repo}/${branch}/${encodePath(path)}`;
-    };
-    const renderFile = (file) => {
-      const path = file.path;
-      const name = file.name || String(path).split("/").pop();
-      const raw = getRawUrl(path);
-      return `
-        <div class="file">
-          <a href="${raw}" target="_blank" rel="noopener">
-            <span class="file-title">${escapeHtml(name)}</span>
-            <span class="file-path">${escapeHtml(path)}</span>
+  </header>
+
+  <main id="top">
+    <section class="shell hero" aria-labelledby="hero-title">
+      <div class="hero-art" aria-hidden="true"></div>
+      <div class="hero-inner">
+        <div class="eyebrow">Personal proxy configuration collection</div>
+        <h1 id="hero-title">ProxyKit</h1>
+        <p class="hero-copy">
+          规则、脚本、Surge 模块统一入口。页面会读取 GitHub Pages 自动生成的文件索引，仓库内容更新后，前端列表跟着刷新。
+        </p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#live-index">
+            Browse Index
+            <svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
           </a>
-          <div class="file-actions">
-            <a class="mini raw" href="${raw}" target="_blank" rel="noopener">Raw</a>
-            <button class="mini" type="button" data-copy="${raw}">Copy</button>
-          </div>
+          <a class="btn" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/" target="_blank" rel="noopener">
+            Raw Base
+          </a>
         </div>
-      `;
-    };
-    const renderMenu = (categories) => {
-      if (!Array.isArray(categories) || categories.length === 0) {
-        menu.innerHTML = `
-          <section class="note">
-            <h2>⚠️ 暂无数据</h2>
-            <p>没有读取到可显示的文件列表。</p>
-          </section>
-        `;
-        return;
+        <div class="status-row">
+          <span class="pill"><span class="dot"></span><span id="sourceText">Loading index</span></span>
+          <span class="pill">Rules · Scripts · Modules</span>
+          <span class="pill">Static H5 · No dependencies</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="search-card" aria-label="Quick raw search">
+      <div class="search-grid">
+        <label class="field">
+          <span class="label">Category</span>
+          <span class="input-wrap">
+            <select id="quickCategory" aria-label="Select category">
+              <option value="all">All Categories</option>
+              <option value="Rule">Rules</option>
+              <option value="Scripts">Scripts</option>
+              <option value="SurgeModule">Modules</option>
+            </select>
+            <svg class="icon" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </label>
+        <label class="field">
+          <span class="label">Search</span>
+          <span class="input-wrap">
+            <input id="quickSearch" type="search" placeholder="输入文件名 / 关键词..." autocomplete="off" />
+          </span>
+        </label>
+        <button class="search-submit" id="quickSubmit" aria-label="Search">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <section class="stats" aria-label="Repository stats">
+      <div class="stat"><strong id="totalCount">—</strong><span>Total files indexed</span></div>
+      <div class="stat"><strong id="categoryCount">—</strong><span>Active categories</span></div>
+      <div class="stat"><strong id="visibleCount">—</strong><span>Current results</span></div>
+    </section>
+
+    <section class="shell section" id="live-index">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Live Index</h2>
+          <p class="section-sub">自动索引仓库文件。优先读取 <code>files.json</code>，读不到就回退到 GitHub API。</p>
+        </div>
+        <a class="btn" href="https://github.com/Luke-Lab666/ProxyKit/tree/main" target="_blank" rel="noopener">
+          Repository
+          <svg class="icon" viewBox="0 0 24 24"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>
+        </a>
+      </div>
+
+      <div class="category-grid" id="categoryGrid" aria-label="Category cards">
+        <div class="category-card skeleton"><span class="cat-count">—</span><div class="cat-icon">R</div><h3 class="cat-title">Rules</h3><p class="cat-desc">Loading...</p></div>
+        <div class="category-card skeleton"><span class="cat-count">—</span><div class="cat-icon">JS</div><h3 class="cat-title">Scripts</h3><p class="cat-desc">Loading...</p></div>
+        <div class="category-card skeleton"><span class="cat-count">—</span><div class="cat-icon">M</div><h3 class="cat-title">Modules</h3><p class="cat-desc">Loading...</p></div>
+      </div>
+
+      <div class="tool-row">
+        <div class="chips" id="chips">
+          <button class="chip active" data-folder="all">All</button>
+          <button class="chip" data-folder="Rule">Rules</button>
+          <button class="chip" data-folder="Scripts">Scripts</button>
+          <button class="chip" data-folder="SurgeModule">Modules</button>
+        </div>
+        <label class="mini-search">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="listSearch" type="search" placeholder="筛选当前列表..." autocomplete="off" />
+        </label>
+      </div>
+
+      <div class="list-meta">
+        <span id="resultMeta">Loading files...</span>
+        <span id="updatedMeta" class="muted">—</span>
+      </div>
+
+      <div class="file-grid" id="fileGrid" aria-live="polite">
+        <article class="file-card skeleton"></article>
+        <article class="file-card skeleton"></article>
+        <article class="file-card skeleton"></article>
+        <article class="file-card skeleton"></article>
+        <article class="file-card skeleton"></article>
+        <article class="file-card skeleton"></article>
+      </div>
+
+      <div class="empty" id="emptyState">
+        没搜到。换个关键词，或者直接去 GitHub 仓库里看完整目录。
+      </div>
+    </section>
+  </main>
+
+  <footer class="shell footer">
+    <span>ProxyKit · 个人代理配置集合</span>
+    <span>Made for GitHub Pages · H5 Auto Index</span>
+  </footer>
+
+  <div class="toast" id="toast">Copied</div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const REPO_OWNER = 'Luke-Lab666';
+      const REPO_NAME = 'ProxyKit';
+      const BRANCH = 'main';
+      const FOLDERS = [
+        { title:'Rules', folder:'Rule', icon:'R', desc:'分流规则、域名规则、IP 规则。' },
+        { title:'Scripts', folder:'Scripts', icon:'JS', desc:'JavaScript 脚本与响应改写。' },
+        { title:'Modules', folder:'SurgeModule', icon:'M', desc:'Surge 模块与相关配置。' }
+      ];
+
+      const RAW_BASE = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/`;
+      const GH_BASE = `https://github.com/${REPO_OWNER}/${REPO_NAME}/blob/${BRANCH}/`;
+      const API_TREE = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/trees/${BRANCH}?recursive=1`;
+
+      const $ = (selector, root = document) => root.querySelector(selector);
+      const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+      const state = {
+        categories: [],
+        files: [],
+        activeFolder: 'all',
+        query: '',
+        source: 'loading'
+      };
+
+      function safeText(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({
+          '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+        }[char]));
       }
-      menu.innerHTML = categories.map((category) => {
-        const files = Array.isArray(category.files) ? category.files : [];
-        const fileList = files.length
-          ? files.map(renderFile).join("")
-          : `<div class="empty">这个分类暂时没有可显示的文件。</div>`;
-        return `
-          <details class="category">
-            <summary>
-              <div class="category-head">
-                <div class="icon ${escapeHtml(category.iconClass || "")}">
-                  ${escapeHtml(category.icon || "")}
-                </div>
-                <div>
-                  <h2 class="category-title">${escapeHtml(category.title || "")}</h2>
-                  <p class="category-desc">${escapeHtml(category.desc || "")}</p>
-                </div>
-                <div class="chevron" aria-hidden="true"></div>
-              </div>
-            </summary>
-            <div class="file-list">
-              ${fileList}
-            </div>
-          </details>
-        `;
-      }).join("");
-      bindCopyButtons();
-    };
-    const bindCopyButtons = () => {
-      document.querySelectorAll("[data-copy]").forEach((button) => {
-        button.addEventListener("click", async () => {
-          const text = button.getAttribute("data-copy");
-          const oldText = button.textContent;
-          try {
-            await navigator.clipboard.writeText(text);
-            button.textContent = "Copied";
-          } catch {
-            button.textContent = "Failed";
+
+      function encodePath(path) {
+        return String(path).split('/').map(encodeURIComponent).join('/');
+      }
+
+      function basename(path) {
+        return String(path).split('/').filter(Boolean).pop() || '';
+      }
+
+      function extname(name) {
+        const clean = String(name).split('?')[0];
+        const idx = clean.lastIndexOf('.');
+        return idx > -1 ? clean.slice(idx + 1).toLowerCase() : '';
+      }
+
+      function folderOf(path, fallback = '') {
+        const first = String(path || '').split('/').filter(Boolean)[0] || fallback;
+        return FOLDERS.some(item => item.folder === first) ? first : fallback;
+      }
+
+      function categoryMeta(folder) {
+        return FOLDERS.find(item => item.folder === folder) || { title: folder, folder, icon:'F', desc:'Repository files.' };
+      }
+
+      function normalizeFile(item, fallbackFolder = '') {
+        const path = typeof item === 'string'
+          ? item
+          : (item.path || item.url || item.html_url || item.name || '');
+
+        const cleanPath = String(path).replace(/^\/+/, '');
+        const folder = folderOf(cleanPath, fallbackFolder);
+        const name = typeof item === 'object' && item.name ? item.name : basename(cleanPath);
+
+        if (!cleanPath || !name || !folder) return null;
+        if (!FOLDERS.some(entry => entry.folder === folder)) return null;
+
+        return {
+          name,
+          path: cleanPath,
+          folder,
+          ext: extname(name)
+        };
+      }
+
+      function groupFiles(files) {
+        return FOLDERS.map(meta => ({
+          ...meta,
+          files: files
+            .filter(file => file.folder === meta.folder)
+            .sort((a,b) => a.path.localeCompare(b.path, 'zh-Hans-CN', { numeric:true }))
+        }));
+      }
+
+      function normalizeCategories(data) {
+        let files = [];
+
+        if (Array.isArray(data)) {
+          const looksCategorized = data.some(item => item && typeof item === 'object' && Array.isArray(item.files));
+          if (looksCategorized) {
+            data.forEach(category => {
+              const fallback = category.folder || folderFromTitle(category.title);
+              (category.files || []).forEach(file => {
+                const normalized = normalizeFile(file, fallback);
+                if (normalized) files.push(normalized);
+              });
+            });
+          } else {
+            files = data.map(item => normalizeFile(item)).filter(Boolean);
           }
-          setTimeout(() => {
-            button.textContent = oldText;
-          }, 1200);
-        });
-      });
-    };
-    const loadFiles = async () => {
-      try {
-        const response = await fetch(`./files.json?v=${Date.now()}`, {
-          cache: "no-store"
-        });
-        if (!response.ok) {
-          throw new Error("Failed to load files.json");
+        } else if (data && typeof data === 'object') {
+          Object.entries(data).forEach(([key, value]) => {
+            if (Array.isArray(value)) {
+              const fallback = folderFromTitle(key) || key;
+              value.forEach(file => {
+                const normalized = normalizeFile(file, fallback);
+                if (normalized) files.push(normalized);
+              });
+            }
+          });
         }
-        const data = await response.json();
-        renderMenu(data);
-      } catch {
-        menu.innerHTML = `
-          <section class="note">
-            <h2>⚠️ 加载失败</h2>
-            <p>文件列表读取失败，请确认 docs/files.json 已生成。</p>
-          </section>
-        `;
+
+        const seen = new Set();
+        files = files.filter(file => {
+          if (seen.has(file.path)) return false;
+          seen.add(file.path);
+          return true;
+        });
+
+        return groupFiles(files);
       }
-    };
-    loadFiles();
+
+      function folderFromTitle(title) {
+        const text = String(title || '').toLowerCase();
+        if (text.includes('rule')) return 'Rule';
+        if (text.includes('script')) return 'Scripts';
+        if (text.includes('module') || text.includes('surge')) return 'SurgeModule';
+        return '';
+      }
+
+      async function loadFromFilesJson() {
+        const response = await fetch(`./files.json?ts=${Date.now()}`, { cache:'no-store' });
+        if (!response.ok) throw new Error(`files.json ${response.status}`);
+        return normalizeCategories(await response.json());
+      }
+
+      async function loadFromGitHubTree() {
+        const response = await fetch(API_TREE, { cache:'no-store' });
+        if (!response.ok) throw new Error(`GitHub API ${response.status}`);
+        const data = await response.json();
+
+        const files = (data.tree || [])
+          .filter(item => item.type === 'blob')
+          .map(item => item.path)
+          .filter(path => FOLDERS.some(folder => path === folder.folder || path.startsWith(folder.folder + '/')))
+          .map(path => normalizeFile(path))
+          .filter(Boolean);
+
+        return groupFiles(files);
+      }
+
+      async function loadIndex() {
+        try {
+          state.categories = await loadFromFilesJson();
+          state.source = 'files.json';
+        } catch (filesJsonError) {
+          try {
+            state.categories = await loadFromGitHubTree();
+            state.source = 'GitHub API fallback';
+          } catch (githubError) {
+            state.categories = groupFiles([]);
+            state.source = 'offline';
+            console.warn(filesJsonError, githubError);
+          }
+        }
+
+        state.files = state.categories.flatMap(category => category.files);
+        renderAll();
+      }
+
+      function rawUrl(file) {
+        return RAW_BASE + encodePath(file.path);
+      }
+
+      function githubUrl(file) {
+        return GH_BASE + encodePath(file.path);
+      }
+
+      function isSurgeModule(file) {
+        return file.folder === 'SurgeModule' && /\.sgmodule$/i.test(file.name);
+      }
+
+      function surgeInstallUrl(file) {
+        return 'surge:///install-module?url=' + encodeURIComponent(rawUrl(file));
+      }
+
+      function fileIcon(file) {
+        if (file.folder === 'Rule') return file.ext === 'mmdb' ? 'IP' : 'R';
+        if (file.folder === 'Scripts') return 'JS';
+        if (file.folder === 'SurgeModule') return 'M';
+        return (file.ext || 'F').slice(0,2).toUpperCase();
+      }
+
+      function renderAll() {
+        $('#sourceText').textContent =
+          state.source === 'files.json' ? 'Auto index: files.json' :
+          state.source === 'GitHub API fallback' ? 'Auto index: GitHub API' :
+          'Index unavailable';
+
+        $('#totalCount').textContent = state.files.length;
+        $('#categoryCount').textContent = state.categories.filter(category => category.files.length).length;
+        $('#updatedMeta').textContent = `Updated ${new Date().toLocaleString('zh-CN', { hour12:false })}`;
+
+        renderCategories();
+        renderChips();
+        renderFiles();
+      }
+
+      function renderCategories() {
+        const html = state.categories.map(category => {
+          const active = state.activeFolder === category.folder ? ' active' : '';
+          return `
+            <button class="category-card${active}" data-folder="${safeText(category.folder)}" type="button">
+              <span class="cat-count">${category.files.length}</span>
+              <div class="cat-icon">${safeText(category.icon)}</div>
+              <h3 class="cat-title">${safeText(category.title)}</h3>
+              <p class="cat-desc">${safeText(category.desc)}</p>
+            </button>
+          `;
+        }).join('');
+        $('#categoryGrid').innerHTML = html;
+      }
+
+      function renderChips() {
+        $$('#chips .chip').forEach(chip => {
+          chip.classList.toggle('active', chip.dataset.folder === state.activeFolder);
+        });
+        $$('.category-card').forEach(card => {
+          card.classList.toggle('active', card.dataset.folder === state.activeFolder);
+        });
+      }
+
+      function visibleFiles() {
+        const query = state.query.trim().toLowerCase();
+        return state.files.filter(file => {
+          const matchFolder = state.activeFolder === 'all' || file.folder === state.activeFolder;
+          const haystack = `${file.name} ${file.path} ${file.folder} ${file.ext}`.toLowerCase();
+          const matchQuery = !query || haystack.includes(query);
+          return matchFolder && matchQuery;
+        });
+      }
+
+      function renderFiles() {
+        const files = visibleFiles();
+        $('#visibleCount').textContent = files.length;
+        $('#resultMeta').textContent = `${files.length} result${files.length === 1 ? '' : 's'} · ${state.activeFolder === 'all' ? 'All categories' : categoryMeta(state.activeFolder).title}`;
+
+        const grid = $('#fileGrid');
+        const empty = $('#emptyState');
+        empty.classList.toggle('show', files.length === 0);
+        grid.style.display = files.length ? 'grid' : 'none';
+
+        grid.innerHTML = files.map(file => {
+          const install = isSurgeModule(file)
+            ? `<a class="small-btn" href="${safeText(surgeInstallUrl(file))}">Install</a>`
+            : '';
+
+          return `
+            <article class="file-card">
+              <div class="file-top">
+                <span class="file-badge">${safeText(fileIcon(file))}</span>
+                <span class="file-folder">${safeText(categoryMeta(file.folder).title)}</span>
+              </div>
+              <h3 class="file-name">${safeText(file.name)}</h3>
+              <p class="file-path">${safeText(file.path)}</p>
+              <div class="file-actions">
+                <a class="small-btn dark" href="${safeText(rawUrl(file))}" target="_blank" rel="noopener">Raw</a>
+                <a class="small-btn" href="${safeText(githubUrl(file))}" target="_blank" rel="noopener">GitHub</a>
+                ${install}
+                <button class="small-btn" type="button" data-copy="${safeText(rawUrl(file))}">Copy</button>
+              </div>
+            </article>
+          `;
+        }).join('');
+      }
+
+      function setFilter(folder, query = state.query) {
+        state.activeFolder = FOLDERS.some(item => item.folder === folder) || folder === 'all' ? folder : 'all';
+        state.query = query;
+        $('#listSearch').value = query;
+        $('#quickSearch').value = query;
+        $('#quickCategory').value = state.activeFolder;
+        renderCategories();
+        renderChips();
+        renderFiles();
+      }
+
+      async function copyText(text) {
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+          } else {
+            const input = document.createElement('textarea');
+            input.value = text;
+            input.setAttribute('readonly', '');
+            input.style.position = 'fixed';
+            input.style.opacity = '0';
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            input.remove();
+          }
+          toast('Raw link copied');
+        } catch {
+          toast('Copy failed');
+        }
+      }
+
+      function toast(message) {
+        const node = $('#toast');
+        node.textContent = message;
+        node.classList.add('show');
+        clearTimeout(toast.timer);
+        toast.timer = setTimeout(() => node.classList.remove('show'), 1500);
+      }
+
+      function bindEvents() {
+        $('#quickSubmit').addEventListener('click', () => {
+          setFilter($('#quickCategory').value, $('#quickSearch').value);
+          $('#live-index').scrollIntoView({ behavior:'smooth', block:'start' });
+        });
+
+        $('#quickSearch').addEventListener('keydown', event => {
+          if (event.key === 'Enter') $('#quickSubmit').click();
+        });
+
+        $('#listSearch').addEventListener('input', event => {
+          state.query = event.target.value;
+          $('#quickSearch').value = state.query;
+          renderFiles();
+        });
+
+        $('#quickCategory').addEventListener('change', event => {
+          setFilter(event.target.value, $('#quickSearch').value);
+        });
+
+        $('#chips').addEventListener('click', event => {
+          const chip = event.target.closest('[data-folder]');
+          if (!chip) return;
+          setFilter(chip.dataset.folder);
+        });
+
+        $('#categoryGrid').addEventListener('click', event => {
+          const card = event.target.closest('[data-folder]');
+          if (!card) return;
+          setFilter(card.dataset.folder);
+          $('#live-index').scrollIntoView({ behavior:'smooth', block:'start' });
+        });
+
+        document.body.addEventListener('click', event => {
+          const copyButton = event.target.closest('[data-copy]');
+          if (copyButton) copyText(copyButton.dataset.copy);
+        });
+
+        $$('[data-jump]').forEach(link => {
+          link.addEventListener('click', event => {
+            event.preventDefault();
+            setFilter(link.dataset.jump);
+            $('#live-index').scrollIntoView({ behavior:'smooth', block:'start' });
+          });
+        });
+      }
+
+      bindEvents();
+      loadIndex();
+    })();
   </script>
 </body>
 </html>
