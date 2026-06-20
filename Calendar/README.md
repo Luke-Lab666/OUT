@@ -9,5 +9,6 @@
 ### 中国大陆节假日与中国纪念日 2026
 
 - iOS 订阅：`webcal://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Calendar/cn-mainland-holidays-2026-cn-full-v2.ics`
-- HTTPS：`https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Calendar/cn-mainland-holidays-2026-cn-full-v2.ics`
+- Raw .ics：`https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Calendar/cn-mainland-holidays-2026-cn-full-v2.ics`
 - 事件数：87
+- 分类：放假 7、调休上班 6、传统节日 22、节气 24、纪念日 28
