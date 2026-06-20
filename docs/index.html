@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#f4f1eb" />
   <meta name="description" content="ProxyKit · 规则、脚本、模块统一入口。" />
   <title>ProxyKit · 规则 / 脚本 / 模块</title>
+  <meta name="proxykit-build" content="v11-inline-index" />
   <style>
     :root{
       --bg:#f4f1eb;
@@ -986,6 +987,8 @@
 
   <div class="toast" id="toast">已复制</div>
 
+  <script id="proxykit-index-data" type="application/json">[]</script>
+
   <script>
     (() => {
       'use strict';
@@ -1121,6 +1124,23 @@
         return '';
       }
 
+      function loadFromEmbeddedIndex() {
+        const node = document.getElementById('proxykit-index-data');
+        if (!node) return null;
+
+        const raw = node.textContent.trim();
+        if (!raw || raw === '[]') return null;
+
+        try {
+          const categories = normalizeCategories(JSON.parse(raw));
+          const count = categories.reduce((sum, category) => sum + category.files.length, 0);
+          return count ? categories : null;
+        } catch (error) {
+          console.warn('embedded index parse failed:', error);
+          return null;
+        }
+      }
+
       async function loadFromFilesJson() {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 6000);
@@ -1139,13 +1159,19 @@
       }
 
       async function loadIndex() {
-        try {
-          state.categories = await loadFromFilesJson();
-          state.source = 'files.json';
-        } catch (error) {
-          state.categories = groupFiles([]);
-          state.source = 'offline';
-          console.warn('files.json load failed:', error);
+        const embedded = loadFromEmbeddedIndex();
+        if (embedded) {
+          state.categories = embedded;
+          state.source = 'embedded';
+        } else {
+          try {
+            state.categories = await loadFromFilesJson();
+            state.source = 'files.json';
+          } catch (error) {
+            state.categories = groupFiles([]);
+            state.source = 'offline';
+            console.warn('file index load failed:', error);
+          }
         }
 
         state.files = state.categories.flatMap(category => category.files);
