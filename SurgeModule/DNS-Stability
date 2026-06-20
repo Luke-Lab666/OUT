@@ -14,7 +14,7 @@ exclude-simple-hostnames = true
 use-local-host-item-for-proxy = true
 
 # 本地网络 / 局域网 / 本地发现，跳过代理。
-skip-proxy = %APPEND% localhost, *.localhost, *.local, *.localdomain, *.lan, *.home.arpa, router.asus.com, www.asusrouter.com, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.168.0.0/16, ::1/128, fc00::/7, fe80::/10
+skip-proxy = %APPEND% localhost, *.localhost, *.local, *.localdomain, *.lan, *.home.arpa, router.asus.com, www.asusrouter.com, tplogin.cn, melogin.cn, falogin.cn, miwifi.com, tendawifi.com, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.168.0.0/16, ::1/128, fc00::/7, fe80::/10
 
 # 这些域名更适合拿真实 IP，避免 STUN / 推送 / 游戏联机 / 本地发现被 fake-ip 或代理 DNS 干扰。
 always-real-ip = %APPEND% localhost, *.localhost, *.local, *.local., *.lan, *.home.arpa, router.asus.com, routerlogin.net, miwifi.com, tendawifi.com, tplogin.cn, time.apple.com, time.windows.com, time.android.com, time.google.com, pool.ntp.org, *.pool.ntp.org, ntp.aliyun.com, ntp.tencent.com, ntp1.aliyun.com, ntp2.aliyun.com, ntp3.aliyun.com, ntp4.aliyun.com, ntp5.aliyun.com, ntp6.aliyun.com, ntp7.aliyun.com, ntp.ntsc.ac.cn, cn.ntp.org.cn, edu.ntp.org.cn, *.time.edu.cn, stun.*.*, stun.*.*.*, *.stun.*.*, *.stun.*.*.*, stun.l.google.com, stun1.l.google.com, stun2.l.google.com, stun3.l.google.com, stun4.l.google.com, *.srv.nintendo.net, *.stun.playstation.net, xbox.*.microsoft.com, *.xboxlive.com, *.msftncsi.com, www.msftconnecttest.com, captive.apple.com, gsp-ssl.ls.apple.com, www.apple.com, connectivitycheck.gstatic.com, clients3.google.com, detectportal.firefox.com
