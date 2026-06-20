@@ -238,27 +238,35 @@ jobs:
 
                 --bg: #f4efe4;
                 --bg2: #fffaf0;
-                --surface: rgba(255, 252, 245, .78);
-                --surface-strong: rgba(255, 252, 245, .94);
-                --surface-soft: rgba(255, 255, 255, .50);
 
                 --text: #17140d;
-                --muted: #756d5e;
-                --muted-2: #9a907d;
+                --muted: #766f62;
+                --muted-2: #9b927f;
 
-                --line: rgba(38, 31, 18, .09);
-                --line-strong: rgba(38, 31, 18, .15);
+                --surface: rgba(255, 252, 245, .78);
+                --surface-strong: rgba(255, 252, 245, .94);
+                --surface-soft: rgba(255, 248, 232, .62);
+
+                --line: rgba(38, 31, 18, .10);
+                --line-strong: rgba(38, 31, 18, .16);
 
                 --accent: #b8872f;
-                --accent-2: #dfbd72;
-                --accent-3: #f3dfaa;
+                --accent-soft: rgba(184, 135, 47, .12);
 
-                --black: #17140d;
-                --blue: #9b6b1f;
+                --control-bg: rgba(30, 24, 13, .07);
+                --control-bg-hover: rgba(30, 24, 13, .10);
+                --control-border: rgba(30, 24, 13, .12);
+                --control-text: #7b6844;
+
+                --control-active-bg: linear-gradient(135deg, #ead28b 0%, #c8963e 52%, #8c5d21 100%);
+                --control-active-text: #171007;
+                --control-active-border: rgba(184, 135, 47, .34);
+
+                --primary-bg: linear-gradient(135deg, #17140d 0%, #2d2110 100%);
+                --primary-bg-hover: linear-gradient(135deg, #22190b 0%, #3a2a12 100%);
+                --primary-text: #f6e4b6;
 
                 --radius-xl: 30px;
-                --radius-lg: 24px;
-                --radius-md: 18px;
                 --radius-pill: 999px;
 
                 --shadow-soft: 0 18px 46px rgba(58, 46, 22, .10);
@@ -274,23 +282,33 @@ jobs:
 
                   --bg: #080705;
                   --bg2: #14100a;
-                  --surface: rgba(24, 19, 11, .72);
-                  --surface-strong: rgba(31, 24, 13, .92);
-                  --surface-soft: rgba(255, 239, 190, .055);
 
                   --text: #f7efe0;
                   --muted: #aaa08d;
                   --muted-2: #827764;
 
+                  --surface: rgba(24, 19, 11, .72);
+                  --surface-strong: rgba(31, 24, 13, .92);
+                  --surface-soft: rgba(255, 239, 190, .055);
+
                   --line: rgba(232, 201, 122, .12);
                   --line-strong: rgba(232, 201, 122, .22);
 
                   --accent: #d8b35f;
-                  --accent-2: #f0d78b;
-                  --accent-3: #fff0bd;
+                  --accent-soft: rgba(232, 201, 122, .11);
 
-                  --black: #e8c97a;
-                  --blue: #e8c97a;
+                  --control-bg: rgba(232, 201, 122, .075);
+                  --control-bg-hover: rgba(232, 201, 122, .105);
+                  --control-border: rgba(232, 201, 122, .14);
+                  --control-text: #d7bd75;
+
+                  --control-active-bg: linear-gradient(135deg, #d9bd73 0%, #b98735 52%, #76501e 100%);
+                  --control-active-text: #120d05;
+                  --control-active-border: rgba(232, 201, 122, .46);
+
+                  --primary-bg: linear-gradient(135deg, #d9bd73 0%, #b98735 52%, #76501e 100%);
+                  --primary-bg-hover: linear-gradient(135deg, #e4c984 0%, #c4923c 52%, #845820 100%);
+                  --primary-text: #120d05;
 
                   --shadow-soft: 0 18px 48px rgba(0, 0, 0, .34);
                   --shadow-card: 0 18px 44px rgba(0, 0, 0, .30);
@@ -365,12 +383,12 @@ jobs:
                 padding: 9px 16px 9px 9px;
                 border: 1px solid var(--line);
                 border-radius: var(--radius-pill);
-                background: rgba(255, 252, 245, .68);
+                background: var(--surface);
                 backdrop-filter: var(--blur);
                 -webkit-backdrop-filter: var(--blur);
                 box-shadow:
                   var(--shadow-soft),
-                  inset 0 1px 0 rgba(255, 255, 255, .62);
+                  inset 0 1px 0 rgba(255, 255, 255, .34);
                 color: var(--text);
                 text-decoration: none;
               }}
@@ -385,15 +403,14 @@ jobs:
                 border-radius: 14px;
                 display: grid;
                 place-items: center;
-                background:
-                  linear-gradient(135deg, #20180c 0%, #11100c 100%);
-                color: #f6e4b6;
+                background: var(--primary-bg);
+                color: var(--primary-text);
                 font-weight: 950;
                 font-size: 14px;
                 letter-spacing: -.055em;
                 box-shadow:
                   0 12px 26px rgba(32, 24, 12, .18),
-                  inset 0 1px 0 rgba(255, 255, 255, .12);
+                  inset 0 1px 0 rgba(255, 255, 255, .16);
               }}
 
               .brand b {{
@@ -411,8 +428,7 @@ jobs:
                 border-radius: var(--radius-pill);
                 transition:
                   color .18s ease,
-                  background .18s ease,
-                  opacity .18s ease;
+                  background .18s ease;
               }}
 
               .repo-link:hover {{
@@ -435,7 +451,7 @@ jobs:
                 -webkit-backdrop-filter: var(--blur);
                 box-shadow:
                   0 28px 80px rgba(58, 46, 22, .11),
-                  inset 0 1px 0 rgba(255, 255, 255, .78),
+                  inset 0 1px 0 rgba(255, 255, 255, .58),
                   inset 0 0 0 1px rgba(255, 255, 255, .18);
               }}
 
@@ -445,8 +461,8 @@ jobs:
                 inset: 0;
                 pointer-events: none;
                 background:
-                  linear-gradient(115deg, rgba(255, 255, 255, .46), transparent 38%, rgba(184, 135, 47, .10) 72%, transparent 100%);
-                opacity: .75;
+                  linear-gradient(115deg, rgba(255, 255, 255, .40), transparent 38%, rgba(184, 135, 47, .10) 72%, transparent 100%);
+                opacity: .72;
               }}
 
               .hero > * {{
@@ -476,12 +492,12 @@ jobs:
                 gap: 8px;
                 padding: 9px 14px;
                 border-radius: var(--radius-pill);
-                background: rgba(255, 252, 245, .70);
-                border: 1px solid var(--line);
-                color: var(--muted);
+                background: var(--control-bg);
+                border: 1px solid var(--control-border);
+                color: var(--control-text);
                 font-size: 14px;
                 font-weight: 820;
-                box-shadow: inset 0 1px 0 rgba(255, 255, 255, .54);
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14);
               }}
 
               .dot {{
@@ -490,8 +506,8 @@ jobs:
                 border-radius: 50%;
                 background: var(--accent);
                 box-shadow:
-                  0 0 0 6px rgba(184, 135, 47, .12),
-                  0 0 18px rgba(184, 135, 47, .18);
+                  0 0 0 6px var(--accent-soft),
+                  0 0 18px var(--accent-soft);
               }}
 
               .section-title {{
@@ -511,15 +527,15 @@ jobs:
 
               .tab {{
                 appearance: none;
-                border: 1px solid var(--line);
-                background: rgba(255, 252, 245, .62);
-                color: var(--muted);
+                border: 1px solid var(--control-border);
+                background: var(--control-bg);
+                color: var(--control-text);
                 padding: 10px 16px;
                 border-radius: var(--radius-pill);
                 font-size: 15px;
                 font-weight: 860;
                 cursor: pointer;
-                box-shadow: inset 0 1px 0 rgba(255, 255, 255, .54);
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
                 transition:
                   transform .18s ease,
                   background .18s ease,
@@ -530,21 +546,22 @@ jobs:
 
               .tab:hover {{
                 transform: translateY(-1px);
+                background: var(--control-bg-hover);
                 color: var(--text);
                 border-color: var(--line-strong);
                 box-shadow:
                   0 10px 24px rgba(58, 46, 22, .07),
-                  inset 0 1px 0 rgba(255, 255, 255, .58);
+                  inset 0 1px 0 rgba(255, 255, 255, .14);
               }}
 
               .tab.active {{
-                background:
-                  linear-gradient(135deg, #17140d 0%, #2b2110 100%);
-                color: #f6e4b6;
-                border-color: rgba(23, 20, 13, .88);
+                background: var(--control-active-bg);
+                color: var(--control-active-text);
+                border-color: var(--control-active-border);
+                text-shadow: none;
                 box-shadow:
                   0 14px 30px rgba(58, 46, 22, .15),
-                  inset 0 1px 0 rgba(255, 255, 255, .12);
+                  inset 0 1px 0 rgba(255, 255, 255, .22);
               }}
 
               .search {{
@@ -557,14 +574,14 @@ jobs:
                 width: 100%;
                 border: 1px solid var(--line);
                 border-radius: 24px;
-                background: rgba(255, 252, 245, .68);
+                background: var(--surface);
                 color: var(--text);
                 padding: 15px 18px 15px 48px;
                 font-size: 16px;
                 font-weight: 650;
                 outline: none;
                 box-shadow:
-                  inset 0 1px 0 rgba(255, 255, 255, .62),
+                  inset 0 1px 0 rgba(255, 255, 255, .22),
                   0 12px 28px rgba(58, 46, 22, .055);
                 transition:
                   background .18s ease,
@@ -573,11 +590,11 @@ jobs:
               }}
 
               .search input:focus {{
-                border-color: rgba(184, 135, 47, .34);
+                border-color: var(--control-active-border);
                 box-shadow:
-                  0 0 0 4px rgba(184, 135, 47, .10),
+                  0 0 0 4px var(--accent-soft),
                   0 14px 32px rgba(58, 46, 22, .08),
-                  inset 0 1px 0 rgba(255, 255, 255, .68);
+                  inset 0 1px 0 rgba(255, 255, 255, .20);
               }}
 
               .search input::placeholder {{
@@ -589,7 +606,7 @@ jobs:
                 left: 20px;
                 top: 50%;
                 transform: translateY(-50%);
-                color: var(--muted-2);
+                color: var(--control-text);
                 font-size: 18px;
                 line-height: 1;
                 pointer-events: none;
@@ -618,7 +635,7 @@ jobs:
                 -webkit-backdrop-filter: var(--blur);
                 box-shadow:
                   var(--shadow-card),
-                  inset 0 1px 0 rgba(255, 255, 255, .52);
+                  inset 0 1px 0 rgba(255, 255, 255, .16);
                 padding: 22px;
                 transition:
                   transform .20s ease,
@@ -633,7 +650,7 @@ jobs:
                 inset: 0;
                 pointer-events: none;
                 background:
-                  linear-gradient(135deg, rgba(255, 255, 255, .34), transparent 38%, rgba(184, 135, 47, .06));
+                  linear-gradient(135deg, rgba(255, 255, 255, .22), transparent 40%, rgba(184, 135, 47, .045));
                 opacity: .62;
               }}
 
@@ -648,7 +665,7 @@ jobs:
                 background: var(--surface-strong);
                 box-shadow:
                   var(--shadow-hover),
-                  inset 0 1px 0 rgba(255, 255, 255, .62);
+                  inset 0 1px 0 rgba(255, 255, 255, .20);
               }}
 
               .calendar-card {{
@@ -670,31 +687,30 @@ jobs:
                 border-radius: 16px;
                 display: grid;
                 place-items: center;
-                border: 1px solid var(--line);
-                background:
-                  linear-gradient(145deg, rgba(255, 255, 255, .72), rgba(255, 247, 229, .42));
-                color: var(--accent);
+                border: 1px solid var(--control-border);
+                background: var(--control-bg);
+                color: var(--control-text);
                 font-weight: 950;
                 font-size: 15px;
                 box-shadow:
-                  inset 0 1px 0 rgba(255, 255, 255, .66),
-                  0 10px 22px rgba(58, 46, 22, .07);
+                  inset 0 1px 0 rgba(255, 255, 255, .12),
+                  0 10px 22px rgba(58, 46, 22, .06);
               }}
 
               .calendar-icon {{
-                background:
-                  linear-gradient(135deg, rgba(223, 189, 114, .22), rgba(184, 135, 47, .10));
-                color: var(--accent);
+                background: var(--control-bg);
+                color: var(--control-text);
               }}
 
               .type-pill {{
                 padding: 7px 12px;
                 border-radius: var(--radius-pill);
-                background: rgba(255, 247, 229, .70);
-                border: 1px solid var(--line);
-                color: var(--muted);
+                background: var(--control-bg);
+                border: 1px solid var(--control-border);
+                color: var(--control-text);
                 font-weight: 850;
                 font-size: 13px;
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, .10);
               }}
 
               h3 {{
@@ -745,9 +761,9 @@ jobs:
 
               .action {{
                 appearance: none;
-                border: 1px solid var(--line);
-                background: rgba(255, 252, 245, .64);
-                color: var(--accent);
+                border: 1px solid var(--control-border);
+                background: var(--control-bg);
+                color: var(--control-text);
                 text-decoration: none;
                 padding: 9px 13px;
                 border-radius: var(--radius-pill);
@@ -755,7 +771,7 @@ jobs:
                 line-height: 1;
                 font-weight: 850;
                 cursor: pointer;
-                box-shadow: inset 0 1px 0 rgba(255, 255, 255, .56);
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, .10);
                 transition:
                   transform .18s ease,
                   background .18s ease,
@@ -766,30 +782,30 @@ jobs:
 
               .action:hover {{
                 transform: translateY(-1px);
+                background: var(--control-bg-hover);
+                color: var(--text);
                 border-color: var(--line-strong);
-                background: rgba(255, 248, 232, .88);
                 box-shadow:
                   0 10px 22px rgba(58, 46, 22, .075),
-                  inset 0 1px 0 rgba(255, 255, 255, .66);
-              }}
-
-              .primary-dark,
-              .primary-blue {{
-                background:
-                  linear-gradient(135deg, #17140d 0%, #2d2110 100%);
-                color: #f6e4b6;
-                border-color: rgba(23, 20, 13, .86);
-                box-shadow:
-                  0 12px 28px rgba(58, 46, 22, .14),
                   inset 0 1px 0 rgba(255, 255, 255, .12);
               }}
 
-              .primary-dark:hover,
-              .primary-blue:hover {{
-                background:
-                  linear-gradient(135deg, #22190b 0%, #3a2a12 100%);
-                color: #ffe8aa;
-                border-color: rgba(23, 20, 13, .92);
+              .action.primary-dark,
+              .action.primary-blue {{
+                background: var(--primary-bg);
+                color: var(--primary-text);
+                border-color: var(--control-active-border);
+                text-shadow: none;
+                box-shadow:
+                  0 12px 28px rgba(58, 46, 22, .14),
+                  inset 0 1px 0 rgba(255, 255, 255, .18);
+              }}
+
+              .action.primary-dark:hover,
+              .action.primary-blue:hover {{
+                background: var(--primary-bg-hover);
+                color: var(--primary-text);
+                border-color: var(--control-active-border);
               }}
 
               .cal-chips {{
@@ -800,14 +816,14 @@ jobs:
               }}
 
               .cal-chip {{
-                border: 1px solid var(--line);
-                background: rgba(255, 252, 245, .62);
+                border: 1px solid var(--control-border);
+                background: var(--control-bg);
                 border-radius: var(--radius-pill);
                 padding: 8px 12px;
                 font-size: 14px;
                 line-height: 1;
                 font-weight: 820;
-                box-shadow: inset 0 1px 0 rgba(255, 255, 255, .50);
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, .10);
               }}
 
               .cal-chip b {{
@@ -852,14 +868,13 @@ jobs:
                 pointer-events: none;
                 padding: 11px 16px;
                 border-radius: var(--radius-pill);
-                background:
-                  linear-gradient(135deg, #17140d 0%, #2d2110 100%);
-                color: #f6e4b6;
+                background: var(--primary-bg);
+                color: var(--primary-text);
                 font-size: 14px;
                 font-weight: 880;
                 box-shadow:
                   0 18px 44px rgba(0, 0, 0, .20),
-                  inset 0 1px 0 rgba(255, 255, 255, .12);
+                  inset 0 1px 0 rgba(255, 255, 255, .14);
                 transition:
                   opacity .2s ease,
                   transform .2s ease;
@@ -880,24 +895,9 @@ jobs:
 
               @media (prefers-color-scheme: dark) {{
                 .brand {{
-                  background: rgba(24, 19, 11, .68);
-                  border-color: rgba(232, 201, 122, .13);
                   box-shadow:
                     0 16px 42px rgba(0, 0, 0, .30),
                     inset 0 1px 0 rgba(255, 239, 190, .055);
-                }}
-
-                .logo {{
-                  background:
-                    linear-gradient(135deg, #f3dd9a 0%, #d6aa4f 45%, #9b651f 100%);
-                  color: #120d05;
-                  box-shadow:
-                    0 14px 30px rgba(168, 111, 34, .22),
-                    inset 0 1px 0 rgba(255, 255, 255, .24);
-                }}
-
-                .repo-link:hover {{
-                  background: rgba(232, 201, 122, .07);
                 }}
 
                 .hero {{
@@ -924,46 +924,6 @@ jobs:
                     0 20px 70px rgba(232, 201, 122, .10);
                 }}
 
-                .hero-badge,
-                .tab,
-                .search input,
-                .file-icon,
-                .type-pill,
-                .action,
-                .cal-chip {{
-                  background: rgba(24, 19, 11, .68);
-                  border-color: rgba(232, 201, 122, .13);
-                  box-shadow:
-                    inset 0 1px 0 rgba(255, 239, 190, .055);
-                }}
-
-                .hero-badge {{
-                  color: rgba(247, 239, 224, .82);
-                }}
-
-                .tab {{
-                  color: #d7bd75;
-                }}
-
-                .tab:hover,
-                .action:hover {{
-                  background: rgba(35, 27, 14, .78);
-                  border-color: rgba(232, 201, 122, .26);
-                }}
-
-                .tab.active,
-                .primary-dark,
-                .primary-blue,
-                .toast {{
-                  background:
-                    linear-gradient(135deg, #f1dc9a 0%, #d2a64d 46%, #9b651f 100%);
-                  color: #120d05;
-                  border-color: rgba(241, 220, 154, .68);
-                  box-shadow:
-                    0 15px 34px rgba(168, 111, 34, .22),
-                    inset 0 1px 0 rgba(255, 255, 255, .26);
-                }}
-
                 .card {{
                   background:
                     linear-gradient(180deg, rgba(28, 22, 13, .72), rgba(18, 14, 8, .68));
@@ -987,58 +947,12 @@ jobs:
                     inset 0 1px 0 rgba(255, 239, 190, .065);
                 }}
 
-                .file-icon {{
-                  background:
-                    linear-gradient(145deg, rgba(232, 201, 122, .12), rgba(24, 19, 11, .72));
-                  color: #efd894;
-                }}
-
-                .calendar-icon {{
-                  background:
-                    linear-gradient(135deg, rgba(232, 201, 122, .18), rgba(168, 111, 34, .20));
-                  color: #f0d78b;
-                }}
-
-                .type-pill {{
-                  color: #b9aa8d;
-                  background: rgba(232, 201, 122, .065);
-                }}
-
-                .action {{
-                  color: #dfc477;
-                }}
-
                 .search input {{
-                  color: #f7efe0;
                   background: rgba(18, 14, 8, .70);
-                }}
-
-                .search input:focus {{
-                  border-color: rgba(232, 201, 122, .30);
-                  box-shadow:
-                    0 0 0 4px rgba(232, 201, 122, .08),
-                    0 16px 36px rgba(0, 0, 0, .24),
-                    inset 0 1px 0 rgba(255, 239, 190, .06);
                 }}
 
                 .search input::placeholder {{
                   color: rgba(247, 239, 224, .42);
-                }}
-
-                .search span {{
-                  color: #d7bd75;
-                }}
-
-                .cal-chip {{
-                  color: rgba(247, 239, 224, .82);
-                  background: rgba(232, 201, 122, .065);
-                }}
-
-                .dot {{
-                  background: #e8c97a;
-                  box-shadow:
-                    0 0 0 7px rgba(232, 201, 122, .11),
-                    0 0 26px rgba(232, 201, 122, .22);
                 }}
 
                 .holiday {{
