@@ -108,18 +108,23 @@ jobs:
 
           files = []
           grouped = []
+
           for category in CATEGORIES:
               if category["type"] != "normal":
                   continue
+
               folder = Path(category["key"])
               items = []
+
               if folder.exists():
                   for item in sorted(folder.rglob("*"), key=lambda p: p.as_posix().lower()):
                       if not item.is_file():
                           continue
+
                       path = item.as_posix()
                       updated = last_commit_time(path)
                       raw = RAW_BASE + quote_path(path)
+
                       data = {
                           "name": item.name,
                           "path": path,
@@ -132,14 +137,21 @@ jobs:
                           "github": GH_BASE + quote_path(path),
                           "install": "surge:///install-module?url=" + raw if category["key"] == "SurgeModule" and item.name.endswith(".sgmodule") else "",
                       }
+
                       files.append(data)
                       items.append(data)
-              grouped.append({"title": category["title"], "folder": category["key"], "files": items})
+
+              grouped.append({
+                  "title": category["title"],
+                  "folder": category["key"],
+                  "files": items,
+              })
 
           calendar_updated = last_commit_time(CALENDAR_FILE)
           calendar_updated_text = short_time(calendar_updated)
           calendar_exists = Path(CALENDAR_FILE).exists()
           calendar_size = Path(CALENDAR_FILE).stat().st_size if calendar_exists else 0
+
           calendar_meta = {
               "title": "日历",
               "folder": "Calendar",
@@ -158,11 +170,13 @@ jobs:
                   "size": calendar_size,
               }],
           }
+
           grouped.append(calendar_meta)
 
           def file_card(file):
               install = f'<a class="action" href="{esc(file["install"])}">安装</a>' if file["install"] else ""
               search = esc((file["name"] + " " + file["path"] + " " + file["title"]).lower())
+
               return f'''
                 <article class="card file-card" data-folder="{esc(file['folder'])}" data-search="{search}">
                   <div class="card-head">
@@ -181,8 +195,13 @@ jobs:
                 </article>'''
 
           def calendar_card():
-              chips = "".join(f'<span class="cal-chip {cls}">{name} <b>{count}</b></span>' for name, count, cls in CALENDAR_COUNTS)
+              chips = "".join(
+                  f'<span class="cal-chip {cls}">{name} <b>{count}</b></span>'
+                  for name, count, cls in CALENDAR_COUNTS
+              )
+
               search = esc("calendar 日历 中国大陆 节假日 调休 传统节日 节气 纪念日 ios 订阅".lower())
+
               return f'''
                 <article class="card calendar-card" data-folder="Calendar" data-search="{search}">
                   <div class="card-head">
@@ -210,127 +229,699 @@ jobs:
           <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-            <meta name="theme-color" content="#f6efd9" media="(prefers-color-scheme: light)">
-            <meta name="theme-color" content="#0f0b05" media="(prefers-color-scheme: dark)">
+            <meta name="theme-color" content="#f4efe4" media="(prefers-color-scheme: light)">
+            <meta name="theme-color" content="#080705" media="(prefers-color-scheme: dark)">
             <title>ProxyKit · 规则 / 脚本 / 模块 / 日历</title>
             <style>
               :root {{
                 color-scheme: light dark;
-                --bg: #f6efd9;
+
+                --bg: #f4efe4;
                 --bg2: #fffaf0;
-                --text: #111318;
-                --muted: #7b7a70;
-                --card: rgba(255, 255, 255, .72);
-                --card-solid: #fffdf7;
-                --line: rgba(17, 19, 24, .09);
-                --line-strong: rgba(17, 19, 24, .14);
-                --black: #111318;
-                --blue: #1677ff;
-                --shadow: 0 18px 42px rgba(48, 41, 20, .10);
+                --surface: rgba(255, 252, 245, .78);
+                --surface-strong: rgba(255, 252, 245, .94);
+                --surface-soft: rgba(255, 255, 255, .50);
+
+                --text: #17140d;
+                --muted: #756d5e;
+                --muted-2: #9a907d;
+
+                --line: rgba(38, 31, 18, .09);
+                --line-strong: rgba(38, 31, 18, .15);
+
+                --accent: #b8872f;
+                --accent-2: #dfbd72;
+                --accent-3: #f3dfaa;
+
+                --black: #17140d;
+                --blue: #9b6b1f;
+
+                --radius-xl: 30px;
+                --radius-lg: 24px;
+                --radius-md: 18px;
+                --radius-pill: 999px;
+
+                --shadow-soft: 0 18px 46px rgba(58, 46, 22, .10);
+                --shadow-card: 0 16px 38px rgba(58, 46, 22, .08);
+                --shadow-hover: 0 24px 64px rgba(58, 46, 22, .14);
+
+                --blur: blur(22px);
               }}
+
               @media (prefers-color-scheme: dark) {{
                 :root {{
                   color-scheme: dark;
-                  --bg: #0f0b05;
-                  --bg2: #1a1308;
-                  --text: #f8ead1;
-                  --muted: #b8a984;
-                  --card: rgba(31, 23, 10, .74);
-                  --card-solid: #1d160b;
-                  --line: rgba(244, 210, 122, .14);
-                  --line-strong: rgba(244, 210, 122, .24);
-                  --black: #f4d27a;
-                  --blue: #f4c76a;
-                  --shadow: 0 18px 44px rgba(0, 0, 0, .38);
+
+                  --bg: #080705;
+                  --bg2: #14100a;
+                  --surface: rgba(24, 19, 11, .72);
+                  --surface-strong: rgba(31, 24, 13, .92);
+                  --surface-soft: rgba(255, 239, 190, .055);
+
+                  --text: #f7efe0;
+                  --muted: #aaa08d;
+                  --muted-2: #827764;
+
+                  --line: rgba(232, 201, 122, .12);
+                  --line-strong: rgba(232, 201, 122, .22);
+
+                  --accent: #d8b35f;
+                  --accent-2: #f0d78b;
+                  --accent-3: #fff0bd;
+
+                  --black: #e8c97a;
+                  --blue: #e8c97a;
+
+                  --shadow-soft: 0 18px 48px rgba(0, 0, 0, .34);
+                  --shadow-card: 0 18px 44px rgba(0, 0, 0, .30);
+                  --shadow-hover: 0 28px 74px rgba(0, 0, 0, .42);
                 }}
               }}
-              * {{ box-sizing: border-box; }}
+
+              * {{
+                box-sizing: border-box;
+              }}
+
+              html {{
+                min-height: 100%;
+                background: var(--bg);
+                text-rendering: geometricPrecision;
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+              }}
+
               body {{
                 margin: 0;
                 min-height: 100vh;
                 color: var(--text);
-                font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
+                font-family:
+                  -apple-system,
+                  BlinkMacSystemFont,
+                  "SF Pro Display",
+                  "SF Pro Text",
+                  "Segoe UI",
+                  sans-serif;
                 background:
-                  radial-gradient(circle at 14% 8%, rgba(255, 255, 255, .96), transparent 28%),
-                  radial-gradient(circle at 88% 7%, rgba(246, 200, 86, .30), transparent 28%),
-                  radial-gradient(circle at 50% 0%, rgba(255, 250, 230, .78), transparent 42%),
-                  linear-gradient(180deg, var(--bg2), var(--bg));
+                  radial-gradient(circle at 12% 0%, rgba(255, 255, 255, .82), transparent 26%),
+                  radial-gradient(circle at 88% 4%, rgba(223, 189, 114, .28), transparent 30%),
+                  radial-gradient(circle at 50% -10%, rgba(255, 245, 210, .66), transparent 46%),
+                  linear-gradient(180deg, var(--bg2) 0%, var(--bg) 54%, #efe6d7 100%);
               }}
-              .wrap {{ width: min(100%, 960px); margin: 0 auto; padding: 30px 20px 46px; }}
-              .topbar {{ display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 26px; }}
-              .brand {{ display: inline-flex; align-items: center; gap: 12px; padding: 11px 17px 11px 11px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.56); backdrop-filter: blur(18px); box-shadow: 0 12px 30px rgba(0,0,0,.04); color: var(--text); text-decoration: none; }}
-              .brand:visited {{ color: var(--text); }}
-              .logo {{ width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; background: var(--black); color: var(--bg2); font-weight: 900; letter-spacing: -.06em; }}
-              .brand b {{ font-size: 26px; letter-spacing: -.06em; }}
-              .repo-link {{ color: var(--text); text-decoration: none; font-weight: 800; opacity: .72; }}
-              .hero {{ border: 1px solid rgba(255,255,255,.72); border-radius: 34px; padding: 42px 24px; margin-bottom: 32px; text-align: center; background: radial-gradient(circle at 50% 42%, rgba(236, 199, 82, .24), transparent 48%), rgba(255,255,255,.42); backdrop-filter: blur(22px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.22); }}
-              h1 {{ margin: 0; font-size: clamp(44px, 8vw, 78px); line-height: .96; letter-spacing: -.08em; }}
-              .hero-badges {{ display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 30px; }}
-              .hero-badge {{ display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; background: rgba(255,255,255,.70); border: 1px solid var(--line); font-size: 16px; font-weight: 850; }}
-              .dot {{ width: 14px; height: 14px; border-radius: 50%; background: #d9a928; box-shadow: 0 0 0 8px rgba(217,169,40,.14); }}
-              .section-title {{ font-size: clamp(34px, 6vw, 52px); line-height: .98; letter-spacing: -.07em; margin: 0 0 20px; }}
-              .tabs {{ display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }}
-              .tab {{ border: 1px solid var(--line-strong); background: rgba(255,255,255,.62); color: var(--blue); padding: 12px 20px; border-radius: 999px; font-size: 18px; font-weight: 900; box-shadow: 0 5px 18px rgba(0,0,0,.04); }}
-              .tab.active {{ background: var(--black); color: var(--bg2); border-color: var(--black); }}
-              .search {{ position: relative; margin: 18px 0 26px; }}
-              .search input {{ width: 100%; border: 1px solid var(--line); border-radius: 30px; background: rgba(255,255,255,.64); color: var(--text); padding: 18px 22px 18px 52px; font-size: 17px; outline: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.7); }}
-              .search span {{ position: absolute; left: 24px; top: 50%; transform: translateY(-50%); opacity: .65; font-size: 18px; }}
-              .count {{ color: var(--muted); font-size: 19px; font-weight: 850; margin: 0 0 22px; }}
-              .grid {{ display: grid; gap: 22px; }}
-              .card {{ border: 1px solid var(--line); border-radius: 30px; background: var(--card); backdrop-filter: blur(18px); box-shadow: var(--shadow); padding: 24px; }}
-              .card-head {{ display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }}
-              .file-icon {{ width: 50px; height: 50px; border-radius: 18px; display: grid; place-items: center; border: 1px solid var(--line-strong); background: rgba(255,255,255,.62); font-weight: 950; font-size: 18px; }}
-              .calendar-icon {{ background: linear-gradient(135deg, rgba(22,119,255,.16), rgba(217,169,40,.20)); color: var(--blue); }}
-              .type-pill {{ padding: 8px 15px; border-radius: 999px; background: rgba(240, 236, 224, .72); color: var(--muted); font-weight: 900; font-size: 16px; }}
-              h3 {{ margin: 0; font-size: clamp(22px, 3.8vw, 34px); line-height: 1.15; letter-spacing: -.04em; }}
-              .path, .updated, .cal-desc, .cal-meta {{ color: var(--muted); font-weight: 760; font-size: 17px; line-height: 1.55; }}
-              .path {{ margin: 14px 0 6px; }}
-              .updated {{ margin: 0 0 22px; }}
-              .actions {{ display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }}
-              .action {{ appearance: none; border: 1px solid var(--line-strong); background: rgba(255,255,255,.64); color: var(--blue); text-decoration: none; padding: 10px 16px; border-radius: 999px; font-size: 16px; font-weight: 920; cursor: pointer; }}
-              .primary-dark {{ background: var(--black); color: var(--bg2); border-color: var(--black); }}
-              .primary-blue {{ background: var(--blue); color: #fff; border-color: var(--blue); }}
-              .calendar-card {{ padding: clamp(24px, 4vw, 36px); }}
-              .calendar-card h3 {{ max-width: 760px; }}
-              .cal-desc {{ max-width: 760px; margin: 18px 0 22px; }}
-              .cal-chips {{ display: flex; flex-wrap: wrap; gap: 12px; margin: 8px 0 28px; }}
-              .cal-chip {{ border: 1px solid var(--line-strong); background: rgba(255,255,255,.58); border-radius: 999px; padding: 8px 14px; font-size: 16px; font-weight: 850; }}
-              .cal-chip b {{ font-weight: 950; }}
-              .holiday {{ color: #d92d20; }} .workday {{ color: #b54708; }} .traditional {{ color: #1570ef; }} .solar {{ color: #027a48; }} .memorial {{ color: #6941c6; }}
-              .empty {{ display: none; text-align: center; color: var(--muted); font-weight: 850; padding: 30px; }}
-              .toast {{ position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); opacity: 0; pointer-events: none; padding: 12px 18px; border-radius: 999px; background: var(--black); color: var(--bg2); font-weight: 900; transition: .2s ease; }}
-              .toast.show {{ opacity: 1; transform: translateX(-50%) translateY(0); }}
-              footer {{ margin-top: 36px; color: var(--muted); text-align: center; font-weight: 700; }}
 
               @media (prefers-color-scheme: dark) {{
                 body {{
                   background:
-                    radial-gradient(circle at 14% 8%, rgba(244, 210, 122, .18), transparent 28%),
-                    radial-gradient(circle at 88% 7%, rgba(184, 120, 34, .20), transparent 28%),
-                    radial-gradient(circle at 50% 0%, rgba(255, 220, 145, .12), transparent 44%),
-                    linear-gradient(180deg, var(--bg2), var(--bg));
+                    radial-gradient(circle at 12% 0%, rgba(232, 201, 122, .13), transparent 28%),
+                    radial-gradient(circle at 86% 2%, rgba(168, 111, 34, .14), transparent 32%),
+                    radial-gradient(circle at 50% -12%, rgba(255, 235, 180, .075), transparent 46%),
+                    linear-gradient(180deg, #14100a 0%, #080705 58%, #050403 100%);
                 }}
+              }}
 
+              a,
+              button,
+              input {{
+                -webkit-tap-highlight-color: transparent;
+              }}
+
+              .wrap {{
+                width: min(100%, 1080px);
+                margin: 0 auto;
+                padding: 34px 22px 52px;
+              }}
+
+              .topbar {{
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 16px;
+                margin-bottom: 28px;
+              }}
+
+              .brand {{
+                display: inline-flex;
+                align-items: center;
+                gap: 12px;
+                padding: 9px 16px 9px 9px;
+                border: 1px solid var(--line);
+                border-radius: var(--radius-pill);
+                background: rgba(255, 252, 245, .68);
+                backdrop-filter: var(--blur);
+                -webkit-backdrop-filter: var(--blur);
+                box-shadow:
+                  var(--shadow-soft),
+                  inset 0 1px 0 rgba(255, 255, 255, .62);
+                color: var(--text);
+                text-decoration: none;
+              }}
+
+              .brand:visited {{
+                color: var(--text);
+              }}
+
+              .logo {{
+                width: 40px;
+                height: 40px;
+                border-radius: 14px;
+                display: grid;
+                place-items: center;
+                background:
+                  linear-gradient(135deg, #20180c 0%, #11100c 100%);
+                color: #f6e4b6;
+                font-weight: 950;
+                font-size: 14px;
+                letter-spacing: -.055em;
+                box-shadow:
+                  0 12px 26px rgba(32, 24, 12, .18),
+                  inset 0 1px 0 rgba(255, 255, 255, .12);
+              }}
+
+              .brand b {{
+                font-size: 22px;
+                letter-spacing: -.055em;
+                line-height: 1;
+              }}
+
+              .repo-link {{
+                color: var(--muted);
+                text-decoration: none;
+                font-weight: 760;
+                font-size: 15px;
+                padding: 10px 14px;
+                border-radius: var(--radius-pill);
+                transition:
+                  color .18s ease,
+                  background .18s ease,
+                  opacity .18s ease;
+              }}
+
+              .repo-link:hover {{
+                color: var(--text);
+                background: var(--surface-soft);
+              }}
+
+              .hero {{
+                position: relative;
+                overflow: hidden;
+                border: 1px solid rgba(255, 255, 255, .72);
+                border-radius: 34px;
+                padding: clamp(38px, 7vw, 72px) 24px;
+                margin-bottom: 38px;
+                text-align: center;
+                background:
+                  radial-gradient(circle at 50% 34%, rgba(223, 189, 114, .26), transparent 42%),
+                  linear-gradient(135deg, rgba(255, 252, 245, .72), rgba(255, 246, 226, .38));
+                backdrop-filter: var(--blur);
+                -webkit-backdrop-filter: var(--blur);
+                box-shadow:
+                  0 28px 80px rgba(58, 46, 22, .11),
+                  inset 0 1px 0 rgba(255, 255, 255, .78),
+                  inset 0 0 0 1px rgba(255, 255, 255, .18);
+              }}
+
+              .hero::before {{
+                content: "";
+                position: absolute;
+                inset: 0;
+                pointer-events: none;
+                background:
+                  linear-gradient(115deg, rgba(255, 255, 255, .46), transparent 38%, rgba(184, 135, 47, .10) 72%, transparent 100%);
+                opacity: .75;
+              }}
+
+              .hero > * {{
+                position: relative;
+                z-index: 1;
+              }}
+
+              h1 {{
+                margin: 0;
+                font-size: clamp(50px, 8vw, 92px);
+                line-height: .92;
+                letter-spacing: -.085em;
+                font-weight: 950;
+              }}
+
+              .hero-badges {{
+                display: flex;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 28px;
+              }}
+
+              .hero-badge {{
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 9px 14px;
+                border-radius: var(--radius-pill);
+                background: rgba(255, 252, 245, .70);
+                border: 1px solid var(--line);
+                color: var(--muted);
+                font-size: 14px;
+                font-weight: 820;
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, .54);
+              }}
+
+              .dot {{
+                width: 9px;
+                height: 9px;
+                border-radius: 50%;
+                background: var(--accent);
+                box-shadow:
+                  0 0 0 6px rgba(184, 135, 47, .12),
+                  0 0 18px rgba(184, 135, 47, .18);
+              }}
+
+              .section-title {{
+                font-size: clamp(32px, 5vw, 48px);
+                line-height: 1;
+                letter-spacing: -.065em;
+                margin: 0 0 20px;
+                font-weight: 930;
+              }}
+
+              .tabs {{
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-bottom: 18px;
+              }}
+
+              .tab {{
+                appearance: none;
+                border: 1px solid var(--line);
+                background: rgba(255, 252, 245, .62);
+                color: var(--muted);
+                padding: 10px 16px;
+                border-radius: var(--radius-pill);
+                font-size: 15px;
+                font-weight: 860;
+                cursor: pointer;
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, .54);
+                transition:
+                  transform .18s ease,
+                  background .18s ease,
+                  color .18s ease,
+                  border-color .18s ease,
+                  box-shadow .18s ease;
+              }}
+
+              .tab:hover {{
+                transform: translateY(-1px);
+                color: var(--text);
+                border-color: var(--line-strong);
+                box-shadow:
+                  0 10px 24px rgba(58, 46, 22, .07),
+                  inset 0 1px 0 rgba(255, 255, 255, .58);
+              }}
+
+              .tab.active {{
+                background:
+                  linear-gradient(135deg, #17140d 0%, #2b2110 100%);
+                color: #f6e4b6;
+                border-color: rgba(23, 20, 13, .88);
+                box-shadow:
+                  0 14px 30px rgba(58, 46, 22, .15),
+                  inset 0 1px 0 rgba(255, 255, 255, .12);
+              }}
+
+              .search {{
+                position: relative;
+                display: block;
+                margin: 18px 0 18px;
+              }}
+
+              .search input {{
+                width: 100%;
+                border: 1px solid var(--line);
+                border-radius: 24px;
+                background: rgba(255, 252, 245, .68);
+                color: var(--text);
+                padding: 15px 18px 15px 48px;
+                font-size: 16px;
+                font-weight: 650;
+                outline: none;
+                box-shadow:
+                  inset 0 1px 0 rgba(255, 255, 255, .62),
+                  0 12px 28px rgba(58, 46, 22, .055);
+                transition:
+                  background .18s ease,
+                  border-color .18s ease,
+                  box-shadow .18s ease;
+              }}
+
+              .search input:focus {{
+                border-color: rgba(184, 135, 47, .34);
+                box-shadow:
+                  0 0 0 4px rgba(184, 135, 47, .10),
+                  0 14px 32px rgba(58, 46, 22, .08),
+                  inset 0 1px 0 rgba(255, 255, 255, .68);
+              }}
+
+              .search input::placeholder {{
+                color: var(--muted-2);
+              }}
+
+              .search span {{
+                position: absolute;
+                left: 20px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: var(--muted-2);
+                font-size: 18px;
+                line-height: 1;
+                pointer-events: none;
+              }}
+
+              .count {{
+                color: var(--muted);
+                font-size: 15px;
+                font-weight: 800;
+                margin: 0 0 20px;
+              }}
+
+              .grid {{
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 18px;
+              }}
+
+              .card {{
+                position: relative;
+                overflow: hidden;
+                border: 1px solid var(--line);
+                border-radius: var(--radius-xl);
+                background: var(--surface);
+                backdrop-filter: var(--blur);
+                -webkit-backdrop-filter: var(--blur);
+                box-shadow:
+                  var(--shadow-card),
+                  inset 0 1px 0 rgba(255, 255, 255, .52);
+                padding: 22px;
+                transition:
+                  transform .20s ease,
+                  border-color .20s ease,
+                  box-shadow .20s ease,
+                  background .20s ease;
+              }}
+
+              .card::before {{
+                content: "";
+                position: absolute;
+                inset: 0;
+                pointer-events: none;
+                background:
+                  linear-gradient(135deg, rgba(255, 255, 255, .34), transparent 38%, rgba(184, 135, 47, .06));
+                opacity: .62;
+              }}
+
+              .card > * {{
+                position: relative;
+                z-index: 1;
+              }}
+
+              .card:hover {{
+                transform: translateY(-2px);
+                border-color: var(--line-strong);
+                background: var(--surface-strong);
+                box-shadow:
+                  var(--shadow-hover),
+                  inset 0 1px 0 rgba(255, 255, 255, .62);
+              }}
+
+              .calendar-card {{
+                grid-column: 1 / -1;
+                padding: clamp(24px, 4vw, 34px);
+              }}
+
+              .card-head {{
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                margin-bottom: 18px;
+              }}
+
+              .file-icon {{
+                width: 44px;
+                height: 44px;
+                border-radius: 16px;
+                display: grid;
+                place-items: center;
+                border: 1px solid var(--line);
+                background:
+                  linear-gradient(145deg, rgba(255, 255, 255, .72), rgba(255, 247, 229, .42));
+                color: var(--accent);
+                font-weight: 950;
+                font-size: 15px;
+                box-shadow:
+                  inset 0 1px 0 rgba(255, 255, 255, .66),
+                  0 10px 22px rgba(58, 46, 22, .07);
+              }}
+
+              .calendar-icon {{
+                background:
+                  linear-gradient(135deg, rgba(223, 189, 114, .22), rgba(184, 135, 47, .10));
+                color: var(--accent);
+              }}
+
+              .type-pill {{
+                padding: 7px 12px;
+                border-radius: var(--radius-pill);
+                background: rgba(255, 247, 229, .70);
+                border: 1px solid var(--line);
+                color: var(--muted);
+                font-weight: 850;
+                font-size: 13px;
+              }}
+
+              h3 {{
+                margin: 0;
+                font-size: clamp(21px, 2.6vw, 28px);
+                line-height: 1.14;
+                letter-spacing: -.04em;
+                font-weight: 900;
+                word-break: break-word;
+              }}
+
+              .calendar-card h3 {{
+                max-width: 760px;
+                font-size: clamp(25px, 3.6vw, 38px);
+              }}
+
+              .path,
+              .updated,
+              .cal-desc,
+              .cal-meta {{
+                color: var(--muted);
+                font-weight: 680;
+                font-size: 14px;
+                line-height: 1.55;
+              }}
+
+              .path {{
+                margin: 12px 0 5px;
+                word-break: break-all;
+              }}
+
+              .updated {{
+                margin: 0 0 18px;
+              }}
+
+              .cal-desc {{
+                max-width: 760px;
+                margin: 16px 0 20px;
+                font-size: 15px;
+              }}
+
+              .actions {{
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 10px;
+              }}
+
+              .action {{
+                appearance: none;
+                border: 1px solid var(--line);
+                background: rgba(255, 252, 245, .64);
+                color: var(--accent);
+                text-decoration: none;
+                padding: 9px 13px;
+                border-radius: var(--radius-pill);
+                font-size: 14px;
+                line-height: 1;
+                font-weight: 850;
+                cursor: pointer;
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, .56);
+                transition:
+                  transform .18s ease,
+                  background .18s ease,
+                  border-color .18s ease,
+                  color .18s ease,
+                  box-shadow .18s ease;
+              }}
+
+              .action:hover {{
+                transform: translateY(-1px);
+                border-color: var(--line-strong);
+                background: rgba(255, 248, 232, .88);
+                box-shadow:
+                  0 10px 22px rgba(58, 46, 22, .075),
+                  inset 0 1px 0 rgba(255, 255, 255, .66);
+              }}
+
+              .primary-dark,
+              .primary-blue {{
+                background:
+                  linear-gradient(135deg, #17140d 0%, #2d2110 100%);
+                color: #f6e4b6;
+                border-color: rgba(23, 20, 13, .86);
+                box-shadow:
+                  0 12px 28px rgba(58, 46, 22, .14),
+                  inset 0 1px 0 rgba(255, 255, 255, .12);
+              }}
+
+              .primary-dark:hover,
+              .primary-blue:hover {{
+                background:
+                  linear-gradient(135deg, #22190b 0%, #3a2a12 100%);
+                color: #ffe8aa;
+                border-color: rgba(23, 20, 13, .92);
+              }}
+
+              .cal-chips {{
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin: 8px 0 24px;
+              }}
+
+              .cal-chip {{
+                border: 1px solid var(--line);
+                background: rgba(255, 252, 245, .62);
+                border-radius: var(--radius-pill);
+                padding: 8px 12px;
+                font-size: 14px;
+                line-height: 1;
+                font-weight: 820;
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, .50);
+              }}
+
+              .cal-chip b {{
+                font-weight: 950;
+              }}
+
+              .holiday {{
+                color: #c24132;
+              }}
+
+              .workday {{
+                color: #a65f17;
+              }}
+
+              .traditional {{
+                color: #9b6b1f;
+              }}
+
+              .solar {{
+                color: #16734a;
+              }}
+
+              .memorial {{
+                color: #6841a8;
+              }}
+
+              .empty {{
+                display: none;
+                text-align: center;
+                color: var(--muted);
+                font-weight: 820;
+                padding: 34px;
+              }}
+
+              .toast {{
+                position: fixed;
+                left: 50%;
+                bottom: 26px;
+                z-index: 20;
+                transform: translateX(-50%) translateY(20px);
+                opacity: 0;
+                pointer-events: none;
+                padding: 11px 16px;
+                border-radius: var(--radius-pill);
+                background:
+                  linear-gradient(135deg, #17140d 0%, #2d2110 100%);
+                color: #f6e4b6;
+                font-size: 14px;
+                font-weight: 880;
+                box-shadow:
+                  0 18px 44px rgba(0, 0, 0, .20),
+                  inset 0 1px 0 rgba(255, 255, 255, .12);
+                transition:
+                  opacity .2s ease,
+                  transform .2s ease;
+              }}
+
+              .toast.show {{
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+              }}
+
+              footer {{
+                margin-top: 38px;
+                color: var(--muted);
+                text-align: center;
+                font-size: 13px;
+                font-weight: 680;
+              }}
+
+              @media (prefers-color-scheme: dark) {{
                 .brand {{
-                  background: rgba(31, 23, 10, .66);
-                  border-color: rgba(244, 210, 122, .16);
-                  box-shadow: 0 12px 30px rgba(0,0,0,.28);
+                  background: rgba(24, 19, 11, .68);
+                  border-color: rgba(232, 201, 122, .13);
+                  box-shadow:
+                    0 16px 42px rgba(0, 0, 0, .30),
+                    inset 0 1px 0 rgba(255, 239, 190, .055);
                 }}
 
                 .logo {{
-                  background: linear-gradient(135deg, #f4d27a, #b87822);
-                  color: #130d04;
-                  box-shadow: 0 10px 26px rgba(191,132,38,.26);
+                  background:
+                    linear-gradient(135deg, #f3dd9a 0%, #d6aa4f 45%, #9b651f 100%);
+                  color: #120d05;
+                  box-shadow:
+                    0 14px 30px rgba(168, 111, 34, .22),
+                    inset 0 1px 0 rgba(255, 255, 255, .24);
+                }}
+
+                .repo-link:hover {{
+                  background: rgba(232, 201, 122, .07);
                 }}
 
                 .hero {{
-                  border-color: rgba(244, 210, 122, .22);
+                  border-color: rgba(232, 201, 122, .17);
                   background:
-                    radial-gradient(circle at 50% 42%, rgba(244, 210, 122, .22), transparent 48%),
-                    linear-gradient(135deg, rgba(32, 23, 10, .84), rgba(18, 13, 6, .76));
+                    radial-gradient(circle at 50% 34%, rgba(232, 201, 122, .16), transparent 42%),
+                    radial-gradient(circle at 70% 76%, rgba(168, 111, 34, .11), transparent 42%),
+                    linear-gradient(145deg, rgba(28, 21, 11, .86), rgba(10, 8, 5, .74));
                   box-shadow:
-                    inset 0 0 0 1px rgba(244, 210, 122, .08),
-                    0 24px 70px rgba(0, 0, 0, .36);
+                    0 32px 86px rgba(0, 0, 0, .40),
+                    inset 0 1px 0 rgba(255, 239, 190, .07),
+                    inset 0 0 0 1px rgba(232, 201, 122, .035);
+                }}
+
+                .hero::before {{
+                  background:
+                    linear-gradient(115deg, rgba(255, 239, 190, .07), transparent 38%, rgba(232, 201, 122, .08) 72%, transparent 100%);
+                }}
+
+                h1 {{
+                  color: #f8efd9;
+                  text-shadow:
+                    0 1px 0 rgba(255, 255, 255, .035),
+                    0 20px 70px rgba(232, 201, 122, .10);
                 }}
 
                 .hero-badge,
@@ -340,79 +931,246 @@ jobs:
                 .type-pill,
                 .action,
                 .cal-chip {{
-                  background: rgba(31, 23, 10, .72);
-                  border-color: rgba(244, 210, 122, .18);
+                  background: rgba(24, 19, 11, .68);
+                  border-color: rgba(232, 201, 122, .13);
+                  box-shadow:
+                    inset 0 1px 0 rgba(255, 239, 190, .055);
+                }}
+
+                .hero-badge {{
+                  color: rgba(247, 239, 224, .82);
+                }}
+
+                .tab {{
+                  color: #d7bd75;
+                }}
+
+                .tab:hover,
+                .action:hover {{
+                  background: rgba(35, 27, 14, .78);
+                  border-color: rgba(232, 201, 122, .26);
                 }}
 
                 .tab.active,
                 .primary-dark,
+                .primary-blue,
                 .toast {{
-                  background: linear-gradient(135deg, #f4d27a, #b87822);
-                  color: #130d04;
-                  border-color: rgba(244, 210, 122, .75);
-                }}
-
-                .primary-blue {{
-                  background: linear-gradient(135deg, #f4d27a, #b87822);
-                  color: #130d04;
-                  border-color: rgba(244, 210, 122, .75);
+                  background:
+                    linear-gradient(135deg, #f1dc9a 0%, #d2a64d 46%, #9b651f 100%);
+                  color: #120d05;
+                  border-color: rgba(241, 220, 154, .68);
+                  box-shadow:
+                    0 15px 34px rgba(168, 111, 34, .22),
+                    inset 0 1px 0 rgba(255, 255, 255, .26);
                 }}
 
                 .card {{
-                  background: rgba(31, 23, 10, .74);
-                  border-color: rgba(244, 210, 122, .15);
-                  box-shadow: var(--shadow);
+                  background:
+                    linear-gradient(180deg, rgba(28, 22, 13, .72), rgba(18, 14, 8, .68));
+                  border-color: rgba(232, 201, 122, .12);
+                  box-shadow:
+                    var(--shadow-card),
+                    inset 0 1px 0 rgba(255, 239, 190, .045);
+                }}
+
+                .card::before {{
+                  background:
+                    linear-gradient(135deg, rgba(255, 239, 190, .055), transparent 42%, rgba(232, 201, 122, .035));
+                }}
+
+                .card:hover {{
+                  background:
+                    linear-gradient(180deg, rgba(33, 26, 15, .78), rgba(20, 16, 9, .72));
+                  border-color: rgba(232, 201, 122, .24);
+                  box-shadow:
+                    var(--shadow-hover),
+                    inset 0 1px 0 rgba(255, 239, 190, .065);
+                }}
+
+                .file-icon {{
+                  background:
+                    linear-gradient(145deg, rgba(232, 201, 122, .12), rgba(24, 19, 11, .72));
+                  color: #efd894;
                 }}
 
                 .calendar-icon {{
-                  background: linear-gradient(135deg, rgba(244, 210, 122, .18), rgba(184, 120, 34, .24));
-                  color: #f4d27a;
+                  background:
+                    linear-gradient(135deg, rgba(232, 201, 122, .18), rgba(168, 111, 34, .20));
+                  color: #f0d78b;
                 }}
 
-                .dot {{
-                  background: #f4d27a;
-                  box-shadow: 0 0 0 8px rgba(244, 210, 122, .14), 0 0 22px rgba(244, 210, 122, .28);
+                .type-pill {{
+                  color: #b9aa8d;
+                  background: rgba(232, 201, 122, .065);
                 }}
 
-                .action:hover,
-                .tab:hover,
-                .card:hover {{
-                  border-color: rgba(244, 210, 122, .34);
+                .action {{
+                  color: #dfc477;
+                }}
+
+                .search input {{
+                  color: #f7efe0;
+                  background: rgba(18, 14, 8, .70);
+                }}
+
+                .search input:focus {{
+                  border-color: rgba(232, 201, 122, .30);
+                  box-shadow:
+                    0 0 0 4px rgba(232, 201, 122, .08),
+                    0 16px 36px rgba(0, 0, 0, .24),
+                    inset 0 1px 0 rgba(255, 239, 190, .06);
                 }}
 
                 .search input::placeholder {{
-                  color: rgba(248, 234, 209, .50);
+                  color: rgba(247, 239, 224, .42);
                 }}
 
-                .holiday {{ color: #ff8a80; }}
-                .workday {{ color: #f6b26b; }}
-                .traditional {{ color: #f4d27a; }}
-                .solar {{ color: #9bd67c; }}
-                .memorial {{ color: #d6b4ff; }}
+                .search span {{
+                  color: #d7bd75;
+                }}
+
+                .cal-chip {{
+                  color: rgba(247, 239, 224, .82);
+                  background: rgba(232, 201, 122, .065);
+                }}
+
+                .dot {{
+                  background: #e8c97a;
+                  box-shadow:
+                    0 0 0 7px rgba(232, 201, 122, .11),
+                    0 0 26px rgba(232, 201, 122, .22);
+                }}
+
+                .holiday {{
+                  color: #ff9b8f;
+                }}
+
+                .workday {{
+                  color: #e8ad65;
+                }}
+
+                .traditional {{
+                  color: #e8c97a;
+                }}
+
+                .solar {{
+                  color: #a8d982;
+                }}
+
+                .memorial {{
+                  color: #d9bcff;
+                }}
+              }}
+
+              @media (max-width: 820px) {{
+                .grid {{
+                  grid-template-columns: 1fr;
+                }}
               }}
 
               @media (max-width: 640px) {{
-                .wrap {{ padding: 24px 14px 36px; }}
-                .topbar {{ margin-bottom: 22px; }}
-                .brand {{ padding: 9px 15px 9px 9px; }}
-                .brand b {{ font-size: 22px; }}
-                .logo {{ width: 38px; height: 38px; border-radius: 12px; font-size: 14px; }}
-                .repo-link {{ display: none; }}
-                .hero {{ border-radius: 30px; padding: 34px 14px; }}
-                h1 {{ font-size: 46px; }}
-                .hero-badges {{ margin-top: 22px; gap: 10px; }}
-                .hero-badge {{ font-size: 15px; padding: 9px 12px; }}
-                .dot {{ width: 12px; height: 12px; box-shadow: 0 0 0 7px rgba(217,169,40,.14); }}
-                .section-title {{ font-size: 36px; margin-bottom: 18px; }}
-                .tabs {{ gap: 10px; }}
-                .tab {{ font-size: 17px; padding: 11px 14px; }}
-                .search input {{ font-size: 16px; padding-top: 16px; padding-bottom: 16px; }}
-                .count {{ font-size: 18px; }}
-                .card {{ border-radius: 26px; padding: 22px; }}
-                .file-icon {{ width: 48px; height: 48px; }}
-                h3 {{ font-size: 24px; }}
-                .path, .updated, .cal-desc, .cal-meta {{ font-size: 16px; }}
-                .action {{ font-size: 15px; padding: 9px 14px; }}
+                .wrap {{
+                  padding: 24px 14px 38px;
+                }}
+
+                .topbar {{
+                  margin-bottom: 22px;
+                }}
+
+                .brand {{
+                  padding: 8px 14px 8px 8px;
+                }}
+
+                .brand b {{
+                  font-size: 21px;
+                }}
+
+                .logo {{
+                  width: 38px;
+                  height: 38px;
+                  border-radius: 13px;
+                  font-size: 13px;
+                }}
+
+                .repo-link {{
+                  display: none;
+                }}
+
+                .hero {{
+                  border-radius: 28px;
+                  padding: 40px 16px;
+                  margin-bottom: 32px;
+                }}
+
+                h1 {{
+                  font-size: 48px;
+                }}
+
+                .hero-badges {{
+                  margin-top: 22px;
+                  gap: 9px;
+                }}
+
+                .hero-badge {{
+                  font-size: 13px;
+                  padding: 8px 11px;
+                }}
+
+                .section-title {{
+                  font-size: 34px;
+                  margin-bottom: 18px;
+                }}
+
+                .tabs {{
+                  gap: 9px;
+                }}
+
+                .tab {{
+                  font-size: 14px;
+                  padding: 10px 13px;
+                }}
+
+                .search input {{
+                  font-size: 15px;
+                  border-radius: 22px;
+                  padding-top: 14px;
+                  padding-bottom: 14px;
+                }}
+
+                .count {{
+                  font-size: 14px;
+                }}
+
+                .card {{
+                  border-radius: 24px;
+                  padding: 20px;
+                }}
+
+                .file-icon {{
+                  width: 42px;
+                  height: 42px;
+                  border-radius: 15px;
+                }}
+
+                h3 {{
+                  font-size: 22px;
+                }}
+
+                .calendar-card h3 {{
+                  font-size: 25px;
+                }}
+
+                .path,
+                .updated,
+                .cal-desc,
+                .cal-meta {{
+                  font-size: 14px;
+                }}
+
+                .action {{
+                  font-size: 13px;
+                  padding: 9px 12px;
+                }}
               }}
             </style>
           </head>
@@ -432,6 +1190,7 @@ jobs:
               </section>
 
               <h2 class="section-title">文件列表</h2>
+
               <nav class="tabs" aria-label="文件分类">
                 <button class="tab active" type="button" data-filter="all">全部</button>
                 <button class="tab" type="button" data-filter="Rule">规则</button>
@@ -440,16 +1199,25 @@ jobs:
                 <button class="tab" type="button" data-filter="Calendar">日历</button>
               </nav>
 
-              <label class="search"><span>⌕</span><input id="search" type="search" placeholder="筛选当前列表…" autocomplete="off"></label>
+              <label class="search">
+                <span>⌕</span>
+                <input id="search" type="search" placeholder="筛选当前列表…" autocomplete="off">
+              </label>
+
               <p id="count" class="count">共 {total} 项</p>
 
               <section id="grid" class="grid">{cards_html}
               </section>
+
               <p id="empty" class="empty">没找到，换个关键词试试。</p>
+
               <footer>ProxyKit · 代理配置集合 · 适用于 GitHub Pages · 自动索引页面</footer>
             </main>
+
             <div id="toast" class="toast">已复制</div>
+
             <script id="files-json" type="application/json">{esc(categories_json)}</script>
+
             <script>
               const tabs = Array.from(document.querySelectorAll('.tab'));
               const cards = Array.from(document.querySelectorAll('.card'));
@@ -468,13 +1236,17 @@ jobs:
               function refresh() {{
                 const q = input.value.trim().toLowerCase();
                 let n = 0;
+
                 for (const card of cards) {{
                   const hitTab = visibleForTab(card);
                   const hitSearch = !q || (card.dataset.search || '').includes(q);
                   const show = hitTab && hitSearch;
+
                   card.style.display = show ? '' : 'none';
+
                   if (show) n++;
                 }}
+
                 const label = active === 'Calendar' ? '个日历' : '项';
                 count.textContent = '共 ' + n + ' ' + label;
                 empty.style.display = n ? 'none' : 'block';
@@ -502,6 +1274,7 @@ jobs:
                   document.execCommand('copy');
                   ta.remove();
                 }}
+
                 toast.classList.add('show');
                 setTimeout(() => toast.classList.remove('show'), 1300);
               }}
@@ -522,6 +1295,7 @@ jobs:
           out.joinpath("index.html").write_text(index_html, encoding="utf-8")
           out.joinpath("files.json").write_text(json.dumps(grouped, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           out.joinpath(".nojekyll").write_text("", encoding="utf-8")
+
           print(f"Rendered {total} normal files plus calendar card.")
           PY
 
