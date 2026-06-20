@@ -1,7 +1,7 @@
 # NAME: APNs
 # AUTHOR: Luke-Lab666
 # REPO: https://github.com/Luke-Lab666/ProxyKit
-# UPDATED: 2026-06-20 12:49:33 UTC
+# UPDATED: 2026-06-20 22:35:19 UTC
 # DESC: Apple Push Notification service rules. Domain rules are unrestricted; IP ranges are port constrained.
 # FORMAT: Surge Rule Set
 # REQUIRED-PORTS: TCP 80, 443, 5223, 2197
