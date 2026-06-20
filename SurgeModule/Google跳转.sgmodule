@@ -1,0 +1,21 @@
+#!name=Safari Google 搜索修复
+#!desc=修复 iOS Safari 选择 Google 作为搜索引擎时，地址栏搜索跳到 google.cn 中转页的问题，自动跳转到 google.com。
+#!author=Luke-Lab666
+#!category=Luke-Lab666
+
+[URL Rewrite]
+# Safari Google 搜索：google.cn/search -> google.com/search
+^https?:\/\/(?:www\.)?google\.cn\/search\?(.+)$ https://www.google.com/search?$1 302
+
+# Google 搜索建议：google.cn/complete/search -> google.com/complete/search
+^https?:\/\/(?:www\.)?google\.cn\/complete\/search\?(.+)$ https://www.google.com/complete/search?$1 302
+
+# 搜索结果跳转链接：google.cn/url -> google.com/url
+^https?:\/\/(?:www\.)?google\.cn\/url\?(.+)$ https://www.google.com/url?$1 302
+
+# google.cn 首页 / webhp -> google.com
+^https?:\/\/(?:www\.)?google\.cn\/$ https://www.google.com/ 302
+^https?:\/\/(?:www\.)?google\.cn\/webhp.*$ https://www.google.com/ 302
+
+[MITM]
+hostname = %APPEND% google.cn, www.google.cn
