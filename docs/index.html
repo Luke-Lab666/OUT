@@ -1122,9 +1122,20 @@
       }
 
       async function loadFromFilesJson() {
-        const response = await fetch(`${INDEX_JSON}?t=${Date.now()}`, { cache: 'no-store' });
-        if (!response.ok) throw new Error(`files.json ${response.status}`);
-        return normalizeCategories(await response.json());
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 6000);
+
+        try {
+          const response = await fetch(`${INDEX_JSON}?t=${Date.now()}`, {
+            cache: 'no-store',
+            signal: controller.signal
+          });
+
+          if (!response.ok) throw new Error(`files.json ${response.status}`);
+          return normalizeCategories(await response.json());
+        } finally {
+          clearTimeout(timer);
+        }
       }
 
       async function loadIndex() {
