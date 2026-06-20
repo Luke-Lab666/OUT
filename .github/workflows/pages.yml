@@ -254,44 +254,45 @@ jobs:
                   radial-gradient(circle at 50% 0%, rgba(255, 250, 230, .78), transparent 42%),
                   linear-gradient(180deg, var(--bg2), var(--bg));
               }}
-              .wrap {{ width: min(100%, 980px); margin: 0 auto; padding: 34px 22px 48px; }}
+              .wrap {{ width: min(100%, 960px); margin: 0 auto; padding: 30px 20px 46px; }}
               .topbar {{ display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 26px; }}
-              .brand {{ display: inline-flex; align-items: center; gap: 12px; padding: 12px 18px 12px 12px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.56); backdrop-filter: blur(18px); box-shadow: 0 12px 30px rgba(0,0,0,.04); }}
-              .logo {{ width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: var(--black); color: var(--bg2); font-weight: 900; letter-spacing: -.06em; }}
-              .brand b {{ font-size: 30px; letter-spacing: -.06em; }}
+              .brand {{ display: inline-flex; align-items: center; gap: 12px; padding: 11px 17px 11px 11px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.56); backdrop-filter: blur(18px); box-shadow: 0 12px 30px rgba(0,0,0,.04); color: var(--text); text-decoration: none; }}
+              .brand:visited {{ color: var(--text); }}
+              .logo {{ width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; background: var(--black); color: var(--bg2); font-weight: 900; letter-spacing: -.06em; }}
+              .brand b {{ font-size: 26px; letter-spacing: -.06em; }}
               .repo-link {{ color: var(--text); text-decoration: none; font-weight: 800; opacity: .72; }}
-              .hero {{ border: 1px solid rgba(255,255,255,.72); border-radius: 36px; padding: 48px 24px; margin-bottom: 34px; text-align: center; background: radial-gradient(circle at 50% 42%, rgba(236, 199, 82, .24), transparent 48%), rgba(255,255,255,.42); backdrop-filter: blur(22px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.22); }}
-              h1 {{ margin: 0; font-size: clamp(56px, 9vw, 98px); line-height: .92; letter-spacing: -.09em; }}
+              .hero {{ border: 1px solid rgba(255,255,255,.72); border-radius: 34px; padding: 42px 24px; margin-bottom: 32px; text-align: center; background: radial-gradient(circle at 50% 42%, rgba(236, 199, 82, .24), transparent 48%), rgba(255,255,255,.42); backdrop-filter: blur(22px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.22); }}
+              h1 {{ margin: 0; font-size: clamp(44px, 8vw, 78px); line-height: .96; letter-spacing: -.08em; }}
               .hero-badges {{ display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 30px; }}
-              .hero-badge {{ display: inline-flex; align-items: center; gap: 9px; padding: 12px 18px; border-radius: 999px; background: rgba(255,255,255,.70); border: 1px solid var(--line); font-size: 18px; font-weight: 850; }}
+              .hero-badge {{ display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; background: rgba(255,255,255,.70); border: 1px solid var(--line); font-size: 16px; font-weight: 850; }}
               .dot {{ width: 14px; height: 14px; border-radius: 50%; background: #d9a928; box-shadow: 0 0 0 8px rgba(217,169,40,.14); }}
-              .section-title {{ font-size: clamp(40px, 7vw, 66px); line-height: .95; letter-spacing: -.08em; margin: 0 0 22px; }}
-              .tabs {{ display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 20px; }}
-              .tab {{ border: 1px solid var(--line-strong); background: rgba(255,255,255,.62); color: var(--blue); padding: 15px 25px; border-radius: 999px; font-size: 21px; font-weight: 900; box-shadow: 0 5px 18px rgba(0,0,0,.04); }}
+              .section-title {{ font-size: clamp(34px, 6vw, 52px); line-height: .98; letter-spacing: -.07em; margin: 0 0 20px; }}
+              .tabs {{ display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }}
+              .tab {{ border: 1px solid var(--line-strong); background: rgba(255,255,255,.62); color: var(--blue); padding: 12px 20px; border-radius: 999px; font-size: 18px; font-weight: 900; box-shadow: 0 5px 18px rgba(0,0,0,.04); }}
               .tab.active {{ background: var(--black); color: var(--bg2); border-color: var(--black); }}
               .search {{ position: relative; margin: 18px 0 26px; }}
-              .search input {{ width: 100%; border: 1px solid var(--line); border-radius: 32px; background: rgba(255,255,255,.64); color: var(--text); padding: 22px 24px 22px 56px; font-size: 20px; outline: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.7); }}
+              .search input {{ width: 100%; border: 1px solid var(--line); border-radius: 30px; background: rgba(255,255,255,.64); color: var(--text); padding: 18px 22px 18px 52px; font-size: 17px; outline: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.7); }}
               .search span {{ position: absolute; left: 24px; top: 50%; transform: translateY(-50%); opacity: .65; font-size: 18px; }}
-              .count {{ color: var(--muted); font-size: 22px; font-weight: 850; margin: 0 0 24px; }}
+              .count {{ color: var(--muted); font-size: 19px; font-weight: 850; margin: 0 0 22px; }}
               .grid {{ display: grid; gap: 22px; }}
-              .card {{ border: 1px solid var(--line); border-radius: 32px; background: var(--card); backdrop-filter: blur(18px); box-shadow: var(--shadow); padding: 28px; }}
-              .card-head {{ display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; }}
-              .file-icon {{ width: 56px; height: 56px; border-radius: 20px; display: grid; place-items: center; border: 1px solid var(--line-strong); background: rgba(255,255,255,.62); font-weight: 950; font-size: 20px; }}
+              .card {{ border: 1px solid var(--line); border-radius: 30px; background: var(--card); backdrop-filter: blur(18px); box-shadow: var(--shadow); padding: 24px; }}
+              .card-head {{ display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }}
+              .file-icon {{ width: 50px; height: 50px; border-radius: 18px; display: grid; place-items: center; border: 1px solid var(--line-strong); background: rgba(255,255,255,.62); font-weight: 950; font-size: 18px; }}
               .calendar-icon {{ background: linear-gradient(135deg, rgba(22,119,255,.16), rgba(217,169,40,.20)); color: var(--blue); }}
-              .type-pill {{ padding: 10px 17px; border-radius: 999px; background: rgba(240, 236, 224, .72); color: var(--muted); font-weight: 900; font-size: 18px; }}
-              h3 {{ margin: 0; font-size: clamp(28px, 4.5vw, 42px); line-height: 1.1; letter-spacing: -.05em; }}
-              .path, .updated, .cal-desc, .cal-meta {{ color: var(--muted); font-weight: 760; font-size: 20px; line-height: 1.65; }}
+              .type-pill {{ padding: 8px 15px; border-radius: 999px; background: rgba(240, 236, 224, .72); color: var(--muted); font-weight: 900; font-size: 16px; }}
+              h3 {{ margin: 0; font-size: clamp(22px, 3.8vw, 34px); line-height: 1.15; letter-spacing: -.04em; }}
+              .path, .updated, .cal-desc, .cal-meta {{ color: var(--muted); font-weight: 760; font-size: 17px; line-height: 1.55; }}
               .path {{ margin: 14px 0 6px; }}
               .updated {{ margin: 0 0 22px; }}
               .actions {{ display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }}
-              .action {{ appearance: none; border: 1px solid var(--line-strong); background: rgba(255,255,255,.64); color: var(--blue); text-decoration: none; padding: 12px 18px; border-radius: 999px; font-size: 18px; font-weight: 920; cursor: pointer; }}
+              .action {{ appearance: none; border: 1px solid var(--line-strong); background: rgba(255,255,255,.64); color: var(--blue); text-decoration: none; padding: 10px 16px; border-radius: 999px; font-size: 16px; font-weight: 920; cursor: pointer; }}
               .primary-dark {{ background: var(--black); color: var(--bg2); border-color: var(--black); }}
               .primary-blue {{ background: var(--blue); color: #fff; border-color: var(--blue); }}
-              .calendar-card {{ padding: clamp(28px, 5vw, 44px); }}
+              .calendar-card {{ padding: clamp(24px, 4vw, 36px); }}
               .calendar-card h3 {{ max-width: 760px; }}
               .cal-desc {{ max-width: 760px; margin: 18px 0 22px; }}
               .cal-chips {{ display: flex; flex-wrap: wrap; gap: 12px; margin: 8px 0 28px; }}
-              .cal-chip {{ border: 1px solid var(--line-strong); background: rgba(255,255,255,.58); border-radius: 999px; padding: 10px 16px; font-size: 19px; font-weight: 850; }}
+              .cal-chip {{ border: 1px solid var(--line-strong); background: rgba(255,255,255,.58); border-radius: 999px; padding: 8px 14px; font-size: 16px; font-weight: 850; }}
               .cal-chip b {{ font-weight: 950; }}
               .holiday {{ color: #d92d20; }} .workday {{ color: #b54708; }} .traditional {{ color: #1570ef; }} .solar {{ color: #027a48; }} .memorial {{ color: #6941c6; }}
               .empty {{ display: none; text-align: center; color: var(--muted); font-weight: 850; padding: 30px; }}
@@ -300,12 +301,26 @@ jobs:
               footer {{ margin-top: 36px; color: var(--muted); text-align: center; font-weight: 700; }}
               @media (max-width: 640px) {{
                 .wrap {{ padding: 24px 14px 36px; }}
-                .brand b {{ font-size: 25px; }}
+                .topbar {{ margin-bottom: 22px; }}
+                .brand {{ padding: 9px 15px 9px 9px; }}
+                .brand b {{ font-size: 22px; }}
+                .logo {{ width: 38px; height: 38px; border-radius: 12px; font-size: 14px; }}
                 .repo-link {{ display: none; }}
-                .hero {{ border-radius: 32px; padding: 42px 14px; }}
-                .tab {{ font-size: 19px; padding: 14px 22px; }}
-                .card {{ border-radius: 28px; padding: 24px; }}
-                .action {{ font-size: 17px; }}
+                .hero {{ border-radius: 30px; padding: 34px 14px; }}
+                h1 {{ font-size: 46px; }}
+                .hero-badges {{ margin-top: 22px; gap: 10px; }}
+                .hero-badge {{ font-size: 15px; padding: 9px 12px; }}
+                .dot {{ width: 12px; height: 12px; box-shadow: 0 0 0 7px rgba(217,169,40,.14); }}
+                .section-title {{ font-size: 36px; margin-bottom: 18px; }}
+                .tabs {{ gap: 10px; }}
+                .tab {{ font-size: 17px; padding: 11px 14px; }}
+                .search input {{ font-size: 16px; padding-top: 16px; padding-bottom: 16px; }}
+                .count {{ font-size: 18px; }}
+                .card {{ border-radius: 26px; padding: 22px; }}
+                .file-icon {{ width: 48px; height: 48px; }}
+                h3 {{ font-size: 24px; }}
+                .path, .updated, .cal-desc, .cal-meta {{ font-size: 16px; }}
+                .action {{ font-size: 15px; padding: 9px 14px; }}
               }}
             </style>
           </head>
