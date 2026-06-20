@@ -210,10 +210,12 @@ jobs:
           <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+            <meta name="theme-color" content="#f6efd9" media="(prefers-color-scheme: light)">
+            <meta name="theme-color" content="#0f0b05" media="(prefers-color-scheme: dark)">
             <title>ProxyKit · 规则 / 脚本 / 模块 / 日历</title>
             <style>
               :root {{
-                color-scheme: light;
+                color-scheme: light dark;
                 --bg: #f6efd9;
                 --bg2: #fffaf0;
                 --text: #111318;
@@ -229,17 +231,17 @@ jobs:
               @media (prefers-color-scheme: dark) {{
                 :root {{
                   color-scheme: dark;
-                  --bg: #12110d;
-                  --bg2: #1b1812;
-                  --text: #f6f1e7;
-                  --muted: #ada495;
-                  --card: rgba(35, 32, 26, .72);
-                  --card-solid: #211f19;
-                  --line: rgba(255, 255, 255, .10);
-                  --line-strong: rgba(255, 255, 255, .16);
-                  --black: #f6f1e7;
-                  --blue: #5aa2ff;
-                  --shadow: 0 18px 44px rgba(0, 0, 0, .30);
+                  --bg: #0f0b05;
+                  --bg2: #1a1308;
+                  --text: #f8ead1;
+                  --muted: #b8a984;
+                  --card: rgba(31, 23, 10, .74);
+                  --card-solid: #1d160b;
+                  --line: rgba(244, 210, 122, .14);
+                  --line-strong: rgba(244, 210, 122, .24);
+                  --black: #f4d27a;
+                  --blue: #f4c76a;
+                  --shadow: 0 18px 44px rgba(0, 0, 0, .38);
                 }}
               }}
               * {{ box-sizing: border-box; }}
@@ -299,6 +301,96 @@ jobs:
               .toast {{ position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); opacity: 0; pointer-events: none; padding: 12px 18px; border-radius: 999px; background: var(--black); color: var(--bg2); font-weight: 900; transition: .2s ease; }}
               .toast.show {{ opacity: 1; transform: translateX(-50%) translateY(0); }}
               footer {{ margin-top: 36px; color: var(--muted); text-align: center; font-weight: 700; }}
+
+              @media (prefers-color-scheme: dark) {{
+                body {{
+                  background:
+                    radial-gradient(circle at 14% 8%, rgba(244, 210, 122, .18), transparent 28%),
+                    radial-gradient(circle at 88% 7%, rgba(184, 120, 34, .20), transparent 28%),
+                    radial-gradient(circle at 50% 0%, rgba(255, 220, 145, .12), transparent 44%),
+                    linear-gradient(180deg, var(--bg2), var(--bg));
+                }}
+
+                .brand {{
+                  background: rgba(31, 23, 10, .66);
+                  border-color: rgba(244, 210, 122, .16);
+                  box-shadow: 0 12px 30px rgba(0,0,0,.28);
+                }}
+
+                .logo {{
+                  background: linear-gradient(135deg, #f4d27a, #b87822);
+                  color: #130d04;
+                  box-shadow: 0 10px 26px rgba(191,132,38,.26);
+                }}
+
+                .hero {{
+                  border-color: rgba(244, 210, 122, .22);
+                  background:
+                    radial-gradient(circle at 50% 42%, rgba(244, 210, 122, .22), transparent 48%),
+                    linear-gradient(135deg, rgba(32, 23, 10, .84), rgba(18, 13, 6, .76));
+                  box-shadow:
+                    inset 0 0 0 1px rgba(244, 210, 122, .08),
+                    0 24px 70px rgba(0, 0, 0, .36);
+                }}
+
+                .hero-badge,
+                .tab,
+                .search input,
+                .file-icon,
+                .type-pill,
+                .action,
+                .cal-chip {{
+                  background: rgba(31, 23, 10, .72);
+                  border-color: rgba(244, 210, 122, .18);
+                }}
+
+                .tab.active,
+                .primary-dark,
+                .toast {{
+                  background: linear-gradient(135deg, #f4d27a, #b87822);
+                  color: #130d04;
+                  border-color: rgba(244, 210, 122, .75);
+                }}
+
+                .primary-blue {{
+                  background: linear-gradient(135deg, #f4d27a, #b87822);
+                  color: #130d04;
+                  border-color: rgba(244, 210, 122, .75);
+                }}
+
+                .card {{
+                  background: rgba(31, 23, 10, .74);
+                  border-color: rgba(244, 210, 122, .15);
+                  box-shadow: var(--shadow);
+                }}
+
+                .calendar-icon {{
+                  background: linear-gradient(135deg, rgba(244, 210, 122, .18), rgba(184, 120, 34, .24));
+                  color: #f4d27a;
+                }}
+
+                .dot {{
+                  background: #f4d27a;
+                  box-shadow: 0 0 0 8px rgba(244, 210, 122, .14), 0 0 22px rgba(244, 210, 122, .28);
+                }}
+
+                .action:hover,
+                .tab:hover,
+                .card:hover {{
+                  border-color: rgba(244, 210, 122, .34);
+                }}
+
+                .search input::placeholder {{
+                  color: rgba(248, 234, 209, .50);
+                }}
+
+                .holiday {{ color: #ff8a80; }}
+                .workday {{ color: #f6b26b; }}
+                .traditional {{ color: #f4d27a; }}
+                .solar {{ color: #9bd67c; }}
+                .memorial {{ color: #d6b4ff; }}
+              }}
+
               @media (max-width: 640px) {{
                 .wrap {{ padding: 24px 14px 36px; }}
                 .topbar {{ margin-bottom: 22px; }}
