@@ -1,23 +1,28 @@
 # NAME: AGI
 # AUTHOR: Luke-Lab666
 # REPO: https://github.com/Luke-Lab666/ProxyKit
-# UPDATED: 2026-06-19 21:40:30 UTC
+# UPDATED: 2026-06-20 02:15:51 UTC
 # DESC: Non-mainland China AI / AGI related domains for Surge.
+# INCLUDE: OpenAI, Copilot, GitHub Copilot, GitHub Models, Gemini, Google Antigravity, Anthropic, JetBrains AI, Meta AI, Perplexity, Mistral AI, Grok AI, Trae AI, OpenRouter, TokenFlux, Groq, Together, Fireworks, Hyperbolic, Jina AI, GPUStack, VoyageAI, Vertex AI, Poe, Cerebras AI, Vercel AI, Hugging Face AI, NVIDIA AI, Kiro, MiniMax International, Z.ai, Xiaomi MiMo.
 # FORMAT: DOMAIN / DOMAIN-SUFFIX
 
 DOMAIN,ai.google.dev
+DOMAIN,ai.jetbrains.com
+DOMAIN,ai.meta.com
+DOMAIN,ai.nvidia.com
 DOMAIN,aida.googleapis.com
 DOMAIN,aisandbox-pa.googleapis.com
 DOMAIN,alkalicore-pa.clients6.google.com
 DOMAIN,alkalimakersuite-pa.clients6.google.com
 DOMAIN,antigravity-unleash.goog
-DOMAIN,antigravity.google
 DOMAIN,api.github.com
-DOMAIN,api.jetbrains.ai
+DOMAIN,api.nvcf.nvidia.com
 DOMAIN,apple-relay.apple.com
 DOMAIN,apple-relay.cloudflare.com
 DOMAIN,apple-relay.fastly-edge.com
+DOMAIN,build.nvidia.com
 DOMAIN,chat.openai.com.cdn.cloudflare.net
+DOMAIN,copilot-proxy.githubusercontent.com
 DOMAIN,copilot.cloud.microsoft
 DOMAIN,copilot.microsoft.com
 DOMAIN,cp4.cloudflare.com
@@ -26,18 +31,29 @@ DOMAIN,gateway.ai.cloudflare.com
 DOMAIN,gspe1-ssl.ls.apple.com
 DOMAIN,guzzoni.apple.com
 DOMAIN,imagine.meta.com
+DOMAIN,integrate.api.nvidia.com
 DOMAIN,jules.google.com
+DOMAIN,mimo.mi.com
+DOMAIN,mimo.xiaomi.com
+DOMAIN,models.github.ai
+DOMAIN,models.inference.ai.azure.com
 DOMAIN,openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net
 DOMAIN,openaicomproductionae4b.blob.core.windows.net
 DOMAIN,production-openaicom-storage.azureedge.net
 DOMAIN,robinfrontend-pa.googleapis.com
 DOMAIN,sydney.bing.com
+DOMAIN,vertexai.googleapis.com
+DOMAIN-SUFFIX,ai-sdk.dev
 DOMAIN-SUFFIX,ai.com
+DOMAIN-SUFFIX,aiplatform.googleapis.com
 DOMAIN-SUFFIX,aistudio.google.com
 DOMAIN-SUFFIX,anthropic.com
+DOMAIN-SUFFIX,antigravity.google
 DOMAIN-SUFFIX,apps.mzstatic.com
 DOMAIN-SUFFIX,bard.google.com
-DOMAIN-SUFFIX,character.ai
+DOMAIN-SUFFIX,bigmodel.cn
+DOMAIN-SUFFIX,byteoversea.com
+DOMAIN-SUFFIX,cerebras.ai
 DOMAIN-SUFFIX,chat.com
 DOMAIN-SUFFIX,chatgpt.com
 DOMAIN-SUFFIX,cici.com
@@ -56,8 +72,8 @@ DOMAIN-SUFFIX,deepmind.com
 DOMAIN-SUFFIX,deepmind.google
 DOMAIN-SUFFIX,dify.ai
 DOMAIN-SUFFIX,dola.com
-DOMAIN-SUFFIX,elevenlabs.io
 DOMAIN-SUFFIX,featuregates.org
+DOMAIN-SUFFIX,fireworks.ai
 DOMAIN-SUFFIX,g.ai
 DOMAIN-SUFFIX,gateway.icloud.com
 DOMAIN-SUFFIX,geller-pa.googleapis.com
@@ -66,17 +82,24 @@ DOMAIN-SUFFIX,gemini.google.com
 DOMAIN-SUFFIX,generativeai.google
 DOMAIN-SUFFIX,generativelanguage.googleapis.com
 DOMAIN-SUFFIX,githubcopilot.com
+DOMAIN-SUFFIX,gpustack.ai
 DOMAIN-SUFFIX,grazie.ai
 DOMAIN-SUFFIX,grok.com
 DOMAIN-SUFFIX,groq.com
 DOMAIN-SUFFIX,hf.co
 DOMAIN-SUFFIX,huggingface.co
+DOMAIN-SUFFIX,hyperbolic.xyz
 DOMAIN-SUFFIX,jasper.ai
+DOMAIN-SUFFIX,jetbrains.ai
+DOMAIN-SUFFIX,jina.ai
+DOMAIN-SUFFIX,kiro.dev
 DOMAIN-SUFFIX,makersuite.google.com
 DOMAIN-SUFFIX,meta.ai
+DOMAIN-SUFFIX,minimax.io
 DOMAIN-SUFFIX,mistral.ai
 DOMAIN-SUFFIX,notebooklm.google
 DOMAIN-SUFFIX,notebooklm.google.com
+DOMAIN-SUFFIX,nvidia.ai
 DOMAIN-SUFFIX,oaistatic.com
 DOMAIN-SUFFIX,oaiusercontent.com
 DOMAIN-SUFFIX,openai.com
@@ -85,15 +108,19 @@ DOMAIN-SUFFIX,openaicom.imgix.net
 DOMAIN-SUFFIX,openart.ai
 DOMAIN-SUFFIX,openrouter.ai
 DOMAIN-SUFFIX,perplexity.ai
-DOMAIN-SUFFIX,phind.com
 DOMAIN-SUFFIX,poe.com
 DOMAIN-SUFFIX,pplx.ai
 DOMAIN-SUFFIX,proactivebackend-pa.googleapis.com
-DOMAIN-SUFFIX,replicate.com
-DOMAIN-SUFFIX,replicate.delivery
-DOMAIN-SUFFIX,runwayml.com
 DOMAIN-SUFFIX,smoot.apple.com
 DOMAIN-SUFFIX,sora.com
+DOMAIN-SUFFIX,together.ai
+DOMAIN-SUFFIX,tokenflux.ai
+DOMAIN-SUFFIX,trae.ai
+DOMAIN-SUFFIX,v0.dev
+DOMAIN-SUFFIX,vercel.ai
+DOMAIN-SUFFIX,voyageai.com
 DOMAIN-SUFFIX,x.ai
-DOMAIN-SUFFIX,you.com
+DOMAIN-SUFFIX,xiaomimimo.com
+DOMAIN-SUFFIX,z.ai
 DOMAIN-SUFFIX,zed.dev
+DOMAIN-SUFFIX,zhipuai.cn
