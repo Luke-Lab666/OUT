@@ -1,216 +1,172 @@
 name: Update AGI Rule
+
 on:
   schedule:
-    # 每天 20:30 UTC 运行一次，大约北京时间 04:30
+    # 每天 20:30 UTC，大约北京时间 04:30
     - cron: "30 20 * * *"
   workflow_dispatch:
+
 permissions:
   contents: write
+
 concurrency:
   group: update-agi-rule
   cancel-in-progress: true
+
 jobs:
   update:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout repository without Node actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --prune --no-tags origin "+refs/heads/main:refs/remotes/origin/main"
+          git checkout -B main origin/main
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - name: Generate AGI rule
         run: |
+          set -euo pipefail
           mkdir -p Rule
+
           python3 <<'PY'
-          import re
           import datetime
+          import re
           from pathlib import Path
+          from urllib.error import HTTPError, URLError
           from urllib.request import Request, urlopen
-          from urllib.error import URLError, HTTPError
+
           output = Path("Rule/AGI")
+
           upstreams = [
               "https://raw.githubusercontent.com/ConnersHua/RuleGo/master/Surge/Ruleset/Extra/AI.list",
               "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/OpenAI/OpenAI.list",
               "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Claude/Claude.list",
               "https://ruleset.skk.moe/List/non_ip/ai.conf",
           ]
-          seed_rules = [
-              ("DOMAIN-SUFFIX", "openai.com"),
-              ("DOMAIN-SUFFIX", "chatgpt.com"),
-              ("DOMAIN-SUFFIX", "oaistatic.com"),
-              ("DOMAIN-SUFFIX", "oaiusercontent.com"),
-              ("DOMAIN-SUFFIX", "sora.com"),
-              ("DOMAIN-SUFFIX", "chat.com"),
-              ("DOMAIN-SUFFIX", "anthropic.com"),
-              ("DOMAIN-SUFFIX", "claude.ai"),
-              ("DOMAIN-SUFFIX", "claude.com"),
-              ("DOMAIN-SUFFIX", "clau.de"),
-              ("DOMAIN-SUFFIX", "claudeusercontent.com"),
-              ("DOMAIN-SUFFIX", "gemini.google.com"),
-              ("DOMAIN-SUFFIX", "gemini.google"),
-              ("DOMAIN-SUFFIX", "generativeai.google"),
-              ("DOMAIN-SUFFIX", "deepmind.com"),
-              ("DOMAIN-SUFFIX", "deepmind.google"),
-              ("DOMAIN-SUFFIX", "notebooklm.google"),
-              ("DOMAIN-SUFFIX", "notebooklm.google.com"),
-              ("DOMAIN", "ai.google.dev"),
-              ("DOMAIN", "aistudio.google.com"),
-              ("DOMAIN", "makersuite.google.com"),
-              ("DOMAIN", "generativelanguage.googleapis.com"),
-              ("DOMAIN", "geller-pa.googleapis.com"),
-              ("DOMAIN", "proactivebackend-pa.googleapis.com"),
-              ("DOMAIN-SUFFIX", "x.ai"),
-              ("DOMAIN-SUFFIX", "grok.com"),
-              ("DOMAIN-SUFFIX", "g.ai"),
-              ("DOMAIN-SUFFIX", "perplexity.ai"),
-              ("DOMAIN-SUFFIX", "pplx.ai"),
-              ("DOMAIN-SUFFIX", "openrouter.ai"),
-              ("DOMAIN-SUFFIX", "poe.com"),
-              ("DOMAIN-SUFFIX", "groq.com"),
-              ("DOMAIN-SUFFIX", "mistral.ai"),
-              ("DOMAIN-SUFFIX", "meta.ai"),
-              ("DOMAIN", "imagine.meta.com"),
-              ("DOMAIN-SUFFIX", "huggingface.co"),
-              ("DOMAIN-SUFFIX", "hf.co"),
-              ("DOMAIN-SUFFIX", "replicate.com"),
-              ("DOMAIN-SUFFIX", "replicate.delivery"),
-              ("DOMAIN-SUFFIX", "cursor.com"),
-              ("DOMAIN-SUFFIX", "cursor.sh"),
-              ("DOMAIN-SUFFIX", "cursorapi.com"),
-              ("DOMAIN-SUFFIX", "cursor-cdn.com"),
-              ("DOMAIN-SUFFIX", "zed.dev"),
-              ("DOMAIN-SUFFIX", "githubcopilot.com"),
-              ("DOMAIN", "copilot.microsoft.com"),
-              ("DOMAIN", "copilot.cloud.microsoft"),
-              ("DOMAIN-SUFFIX", "character.ai"),
-              ("DOMAIN-SUFFIX", "runwayml.com"),
-              ("DOMAIN-SUFFIX", "elevenlabs.io"),
-              ("DOMAIN-SUFFIX", "phind.com"),
-              ("DOMAIN-SUFFIX", "you.com"),
-          ]
-          allow_types = {
-              "DOMAIN",
-              "DOMAIN-SUFFIX",
-          }
+
+          seed_rules = [('DOMAIN-SUFFIX', 'openai.com'), ('DOMAIN-SUFFIX', 'chatgpt.com'), ('DOMAIN-SUFFIX', 'oaistatic.com'), ('DOMAIN-SUFFIX', 'oaiusercontent.com'), ('DOMAIN-SUFFIX', 'openaiapi-site.azureedge.net'), ('DOMAIN-SUFFIX', 'openaicom.imgix.net'), ('DOMAIN', 'chat.openai.com.cdn.cloudflare.net'), ('DOMAIN', 'openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net'), ('DOMAIN', 'openaicomproductionae4b.blob.core.windows.net'), ('DOMAIN', 'production-openaicom-storage.azureedge.net'), ('DOMAIN-SUFFIX', 'sora.com'), ('DOMAIN-SUFFIX', 'chat.com'), ('DOMAIN-SUFFIX', 'ai.com'), ('DOMAIN', 'copilot.microsoft.com'), ('DOMAIN', 'copilot.cloud.microsoft'), ('DOMAIN', 'sydney.bing.com'), ('DOMAIN-SUFFIX', 'githubcopilot.com'), ('DOMAIN', 'copilot-proxy.githubusercontent.com'), ('DOMAIN', 'models.github.ai'), ('DOMAIN', 'models.inference.ai.azure.com'), ('DOMAIN', 'api.github.com'), ('DOMAIN-SUFFIX', 'gemini.google.com'), ('DOMAIN-SUFFIX', 'gemini.google'), ('DOMAIN-SUFFIX', 'generativeai.google'), ('DOMAIN-SUFFIX', 'deepmind.com'), ('DOMAIN-SUFFIX', 'deepmind.google'), ('DOMAIN-SUFFIX', 'notebooklm.google'), ('DOMAIN-SUFFIX', 'notebooklm.google.com'), ('DOMAIN', 'ai.google.dev'), ('DOMAIN', 'aistudio.google.com'), ('DOMAIN', 'makersuite.google.com'), ('DOMAIN', 'generativelanguage.googleapis.com'), ('DOMAIN', 'geller-pa.googleapis.com'), ('DOMAIN', 'proactivebackend-pa.googleapis.com'), ('DOMAIN-SUFFIX', 'aiplatform.googleapis.com'), ('DOMAIN', 'vertexai.googleapis.com'), ('DOMAIN-SUFFIX', 'antigravity.google'), ('DOMAIN', 'antigravity-unleash.goog'), ('DOMAIN', 'jules.google.com'), ('DOMAIN', 'daily-cloudcode-pa.googleapis.com'), ('DOMAIN-SUFFIX', 'cloudcode-pa.googleapis.com'), ('DOMAIN', 'alkalicore-pa.clients6.google.com'), ('DOMAIN', 'alkalimakersuite-pa.clients6.google.com'), ('DOMAIN', 'robinfrontend-pa.googleapis.com'), ('DOMAIN', 'aisandbox-pa.googleapis.com'), ('DOMAIN', 'aida.googleapis.com'), ('DOMAIN-SUFFIX', 'anthropic.com'), ('DOMAIN-SUFFIX', 'claude.ai'), ('DOMAIN-SUFFIX', 'claude.com'), ('DOMAIN-SUFFIX', 'clau.de'), ('DOMAIN-SUFFIX', 'claudeusercontent.com'), ('DOMAIN-SUFFIX', 'jetbrains.ai'), ('DOMAIN-SUFFIX', 'grazie.ai'), ('DOMAIN', 'ai.jetbrains.com'), ('DOMAIN-SUFFIX', 'meta.ai'), ('DOMAIN', 'imagine.meta.com'), ('DOMAIN', 'ai.meta.com'), ('DOMAIN-SUFFIX', 'perplexity.ai'), ('DOMAIN-SUFFIX', 'pplx.ai'), ('DOMAIN-SUFFIX', 'mistral.ai'), ('DOMAIN-SUFFIX', 'x.ai'), ('DOMAIN-SUFFIX', 'grok.com'), ('DOMAIN-SUFFIX', 'g.ai'), ('DOMAIN-SUFFIX', 'trae.ai'), ('DOMAIN', 'trae-api-sg.byteoversea.com'), ('DOMAIN', 'trae-api-us.byteoversea.com'), ('DOMAIN', 'trae-api-va.byteoversea.com'), ('DOMAIN', 'trae-web.byteoversea.com'), ('DOMAIN-SUFFIX', 'openrouter.ai'), ('DOMAIN-SUFFIX', 'tokenflux.ai'), ('DOMAIN-SUFFIX', 'groq.com'), ('DOMAIN-SUFFIX', 'together.ai'), ('DOMAIN-SUFFIX', 'fireworks.ai'), ('DOMAIN-SUFFIX', 'hyperbolic.xyz'), ('DOMAIN-SUFFIX', 'jina.ai'), ('DOMAIN-SUFFIX', 'gpustack.ai'), ('DOMAIN-SUFFIX', 'voyageai.com'), ('DOMAIN-SUFFIX', 'poe.com'), ('DOMAIN-SUFFIX', 'cerebras.ai'), ('DOMAIN-SUFFIX', 'vercel.ai'), ('DOMAIN-SUFFIX', 'ai-sdk.dev'), ('DOMAIN-SUFFIX', 'v0.dev'), ('DOMAIN-SUFFIX', 'huggingface.co'), ('DOMAIN-SUFFIX', 'hf.co'), ('DOMAIN', 'build.nvidia.com'), ('DOMAIN', 'ai.nvidia.com'), ('DOMAIN', 'integrate.api.nvidia.com'), ('DOMAIN', 'api.nvcf.nvidia.com'), ('DOMAIN-SUFFIX', 'nvidia.ai'), ('DOMAIN-SUFFIX', 'kiro.dev'), ('DOMAIN-SUFFIX', 'minimax.io'), ('DOMAIN-SUFFIX', 'z.ai'), ('DOMAIN-SUFFIX', 'bigmodel.cn'), ('DOMAIN-SUFFIX', 'zhipuai.cn'), ('DOMAIN', 'mimo.xiaomi.com'), ('DOMAIN', 'mimo.mi.com'), ('DOMAIN-SUFFIX', 'xiaomimimo.com')]
+
+          allow_types = {"DOMAIN", "DOMAIN-SUFFIX"}
+
+          # 国内 AI 默认过滤；allow_domains / allow_suffixes 里点名的国际入口不受影响。
           cn_keywords = [
-              "baidu",
-              "wenxin",
-              "yiyan",
-              "qianfan",
-              "aliyun",
-              "alibaba",
-              "dashscope",
-              "tongyi",
-              "tencent",
-              "hunyuan",
-              "volcengine",
-              "doubao",
-              "bytedance",
-              "byteoversea",
-              "coze",
-              "zhipu",
-              "bigmodel",
-              "moonshot",
-              "kimi",
-              "deepseek",
-              "minimax",
-              "abab",
-              "baichuan",
-              "modelscope",
-              "siliconflow",
-              "sensenova",
-              "xfyun",
-              "iflytek",
-              "stepfun",
-              "01.ai",
-              "lingyiwanwu",
-              "tiangong",
-              "360",
-              "dify.cn",
+              "baidu", "wenxin", "yiyan", "qianfan",
+              "aliyun", "alibaba", "dashscope", "tongyi",
+              "tencent", "hunyuan", "volcengine", "doubao",
+              "bytedance", "coze", "deepseek", "kimi", "moonshot",
+              "baichuan", "modelscope", "siliconflow", "sensenova",
+              "xfyun", "iflytek", "stepfun", "01.ai", "lingyiwanwu",
+              "tiangong", "dify.cn",
           ]
-          cn_suffixes = [
-              ".cn",
-              ".com.cn",
-              ".net.cn",
-              ".org.cn",
-              ".gov.cn",
-          ]
+
+          allow_domains = {
+              "api.github.com",
+              "bigmodel.cn",
+              "zhipuai.cn",
+              "mimo.xiaomi.com",
+              "mimo.mi.com",
+              "platform.xiaomimimo.com",
+              "trae-api-sg.byteoversea.com",
+              "trae-api-us.byteoversea.com",
+              "trae-api-va.byteoversea.com",
+              "trae-web.byteoversea.com",
+          }
+
+          allow_suffixes = {
+              "z.ai",
+              "bigmodel.cn",
+              "zhipuai.cn",
+              "minimax.io",
+              "xiaomimimo.com",
+              "trae.ai",
+          }
+
+          cn_suffixes = [".cn", ".com.cn", ".net.cn", ".org.cn", ".gov.cn"]
+
           generic_drop_suffixes = [
-              "auth0.com",
-              "stripe.com",
-              "sentry.io",
-              "segment.io",
-              "intercom.io",
-              "intercomcdn.com",
-              "launchdarkly.com",
-              "algolia.net",
-              "identrust.com",
-              "observeit.net",
-              "usefathom.com",
-              "statsigapi.net",
-              "livekit.cloud",
-              "arkoselabs.com",
-              "cloudflareinsights.com",
+              "auth0.com", "stripe.com", "sentry.io", "segment.io",
+              "intercom.io", "intercomcdn.com", "launchdarkly.com",
+              "algolia.net", "identrust.com", "observeit.net",
+              "usefathom.com", "statsigapi.net", "livekit.cloud",
+              "arkoselabs.com", "cloudflareinsights.com",
           ]
+
           generic_drop_exact = [
-              "www.bing.com",
-              "storage.googleapis.com",
-              "apis.google.com",
-              "static.cloudflareinsights.com",
-              "cdn.usefathom.com",
-              "browser-intake-datadoghq.com",
-              "browser-intake-us5-datadoghq.com",
-              "api.statsig.com",
-              "events.statsigapi.net",
-              "invoice.stripe.com",
+              "www.bing.com", "storage.googleapis.com", "apis.google.com",
+              "static.cloudflareinsights.com", "cdn.usefathom.com",
+              "browser-intake-datadoghq.com", "browser-intake-us5-datadoghq.com",
+              "api.statsig.com", "events.statsigapi.net", "invoice.stripe.com",
               "pplx-res.cloudinary.com",
           ]
+
+          # 不该合并成泛规则的“大域名”。这些只保留 seed / 上游里明确写出的子域名。
           too_broad_suffixes = {
-              "google.com",
-              "googleapis.com",
-              "microsoft.com",
-              "github.com",
-              "apple.com",
-              "icloud.com",
-              "bing.com",
-              "cloudflare.com",
-              "cloudfront.net",
-              "azureedge.net",
+              "google.com", "googleapis.com", "microsoft.com", "github.com",
+              "apple.com", "icloud.com", "bing.com", "cloudflare.com",
+              "cloudfront.net", "azureedge.net", "nvidia.com",
+              "vercel.com", "mi.com", "xiaomi.com", "meta.com",
           }
+
           domain_re = re.compile(r"^[a-z0-9][a-z0-9.-]*[a-z0-9]$")
+
           def fetch_text(url):
               try:
                   request = Request(
                       url,
                       headers={
-                          "User-Agent": "Luke-Lab666-ProxyKit-Updater/1.0",
+                          "User-Agent": "Luke-Lab666-ProxyKit-AGI-Updater/3.0",
                           "Accept": "text/plain,*/*",
                       },
                   )
-                  with urlopen(request, timeout=20) as response:
+                  with urlopen(request, timeout=25) as response:
                       return response.read().decode("utf-8", errors="ignore")
               except (URLError, HTTPError, TimeoutError) as error:
                   print(f"Skip upstream: {url} ({error})")
                   return ""
+
           def normalize_domain(value):
               return value.strip().lower().removeprefix(".").rstrip(".")
+
           def parse_rule_line(line):
               raw = line.strip()
               if not raw or raw.startswith("#"):
                   return None
               if "#" in raw:
                   raw = raw.split("#", 1)[0].strip()
+
               raw = raw.replace("，", ",")
               parts = [part.strip() for part in raw.split(",") if part.strip()]
               if len(parts) < 2:
                   return None
+
               rule_type = parts[0].upper()
               domain = normalize_domain(parts[1])
+
               if rule_type not in allow_types:
                   return None
               if not domain or "." not in domain:
                   return None
               if not domain_re.match(domain):
                   return None
+
               return rule_type, domain
+
+          def domain_allowed(domain):
+              return (
+                  domain in allow_domains
+                  or any(domain == suffix or domain.endswith("." + suffix) for suffix in allow_suffixes)
+              )
+
           def should_drop(rule_type, domain):
+              if domain_allowed(domain):
+                  return False
               if any(domain.endswith(suffix) for suffix in cn_suffixes):
                   return True
               if any(keyword in domain for keyword in cn_keywords):
@@ -222,59 +178,82 @@ jobs:
               if rule_type == "DOMAIN-SUFFIX" and domain in too_broad_suffixes:
                   return True
               return False
+
           def covered_by_suffix(domain, suffixes):
               return any(domain == suffix or domain.endswith("." + suffix) for suffix in suffixes)
+
           rules = set(seed_rules)
+
           for url in upstreams:
               text = fetch_text(url)
               for line in text.splitlines():
                   rule = parse_rule_line(line)
                   if rule:
                       rules.add(rule)
+
           filtered = {
               (rule_type, domain)
               for rule_type, domain in rules
               if not should_drop(rule_type, domain)
           }
+
           suffixes = {
               domain
               for rule_type, domain in filtered
               if rule_type == "DOMAIN-SUFFIX"
           }
+
           final_rules = set()
+          merged_rules = []
+
           for rule_type, domain in filtered:
-              if rule_type == "DOMAIN" and covered_by_suffix(domain, suffixes):
-                  continue
+              if rule_type == "DOMAIN":
+                  covered = next(
+                      (suffix for suffix in suffixes if domain == suffix or domain.endswith("." + suffix)),
+                      None,
+                  )
+                  if covered:
+                      merged_rules.append((rule_type, domain, covered))
+                      continue
+
               final_rules.add((rule_type, domain))
+
           sorted_rules = sorted(final_rules, key=lambda item: (item[0], item[1]))
-          now = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+          now = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+
           header = [
               "# NAME: AGI",
               "# AUTHOR: Luke-Lab666",
               "# REPO: https://github.com/Luke-Lab666/ProxyKit",
               f"# UPDATED: {now}",
               "# DESC: Non-mainland China AI / AGI related domains for Surge.",
+              "# INCLUDE: OpenAI, Copilot, GitHub Copilot, GitHub Models, Gemini, Google Antigravity, Anthropic, JetBrains AI, Meta AI, Perplexity, Mistral AI, Grok AI, Trae AI, OpenRouter, TokenFlux, Groq, Together, Fireworks, Hyperbolic, Jina AI, GPUStack, VoyageAI, Vertex AI, Poe, Cerebras AI, Vercel AI, Hugging Face AI, NVIDIA AI, Kiro, MiniMax International, Z.ai, Xiaomi MiMo.",
               "# FORMAT: DOMAIN / DOMAIN-SUFFIX",
               "",
           ]
+
           body = [
               f"{rule_type},{domain}"
               for rule_type, domain in sorted_rules
           ]
-          output.write_text(
-              "\n".join(header + body) + "\n",
-              encoding="utf-8"
-          )
+
+          output.write_text("\n".join(header + body) + "\n", encoding="utf-8")
+
           print(f"Generated {output} with {len(body)} rules.")
+          print(f"Merged redundant DOMAIN rules: {len(merged_rules)}")
+          for rule_type, domain, suffix in sorted(merged_rules, key=lambda item: item[1]):
+              print(f"  - {rule_type},{domain} covered by DOMAIN-SUFFIX,{suffix}")
           PY
+
       - name: Commit changes
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          set -euo pipefail
+
           git add Rule/AGI
+
           if git diff --cached --quiet; then
             echo "No changes."
           else
             git commit -m "Update AGI rule"
-            git push
+            git push origin main
           fi
