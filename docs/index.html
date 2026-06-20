@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f4f1eb" />
   <meta name="description" content="ProxyKit · 规则、脚本、模块统一入口。" />
   <title>ProxyKit · 规则 / 脚本 / 模块</title>
-  <meta name="proxykit-build" content="v11-inline-index" />
+  <meta name="proxykit-build" content="v12-files-js" />
   <style>
     :root{
       --bg:#f4f1eb;
@@ -987,6 +987,7 @@
 
   <div class="toast" id="toast">已复制</div>
 
+  <script src="./files.js"></script>
   <script id="proxykit-index-data" type="application/json">[]</script>
 
   <script>
@@ -1124,6 +1125,14 @@
         return '';
       }
 
+      function loadFromExternalIndex() {
+        if (!Array.isArray(window.__PROXYKIT_INDEX__)) return null;
+
+        const categories = normalizeCategories(window.__PROXYKIT_INDEX__);
+        const count = categories.reduce((sum, category) => sum + category.files.length, 0);
+        return count ? categories : null;
+      }
+
       function loadFromEmbeddedIndex() {
         const node = document.getElementById('proxykit-index-data');
         if (!node) return null;
@@ -1159,18 +1168,24 @@
       }
 
       async function loadIndex() {
-        const embedded = loadFromEmbeddedIndex();
-        if (embedded) {
-          state.categories = embedded;
-          state.source = 'embedded';
+        const external = loadFromExternalIndex();
+        if (external) {
+          state.categories = external;
+          state.source = 'files.js';
         } else {
-          try {
-            state.categories = await loadFromFilesJson();
-            state.source = 'files.json';
-          } catch (error) {
-            state.categories = groupFiles([]);
-            state.source = 'offline';
-            console.warn('file index load failed:', error);
+          const embedded = loadFromEmbeddedIndex();
+          if (embedded) {
+            state.categories = embedded;
+            state.source = 'embedded';
+          } else {
+            try {
+              state.categories = await loadFromFilesJson();
+              state.source = 'files.json';
+            } catch (error) {
+              state.categories = groupFiles([]);
+              state.source = 'offline';
+              console.warn('file index load failed:', error);
+            }
           }
         }
 
