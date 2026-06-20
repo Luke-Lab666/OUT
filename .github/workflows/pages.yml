@@ -42,7 +42,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Build static page index
+      - name: Build static index files
         run: |
           set -euo pipefail
 
@@ -52,32 +52,8 @@ jobs:
 
           python3 <<'PY'
           import json
-          import re
           import subprocess
           from pathlib import Path
-          from html import escape
-
-          site = Path("/tmp/proxykit-pages")
-          index_path = site / "index.html"
-
-          if not index_path.exists():
-              raise SystemExit("docs/index.html 不存在，停止部署。")
-
-          html = index_path.read_text(encoding="utf-8")
-
-          required_markers = [
-              'id="proxykit-index-data"',
-              "loadFromEmbeddedIndex",
-              "loadFromFilesJson",
-          ]
-
-          missing = [marker for marker in required_markers if marker not in html]
-          if missing:
-              raise SystemExit(
-                  "docs/index.html 不是 inline-index 版本，缺少："
-                  + ", ".join(missing)
-                  + "。请先用最新的 proxykit-h5-golden-fluid-v11-inline-index.html 覆盖 docs/index.html。"
-              )
 
           categories = [
               {
@@ -136,21 +112,30 @@ jobs:
                   "files": files,
               })
 
+          site = Path("/tmp/proxykit-pages")
+          site.mkdir(parents=True, exist_ok=True)
+
           index_json = json.dumps(output, ensure_ascii=False, indent=2)
-          payload = escape(index_json, quote=False)
-
-          html = re.sub(
-              r'(<script id="proxykit-index-data" type="application/json">)([\s\S]*?)(</script>)',
-              r'\1' + payload + r'\3',
-              html,
-              count=1,
+          site.joinpath("files.json").write_text(index_json + "\n", encoding="utf-8")
+          site.joinpath("files.js").write_text(
+              "window.__PROXYKIT_INDEX__ = " + index_json + ";\n",
+              encoding="utf-8",
           )
+          site.joinpath(".nojekyll").write_text("", encoding="utf-8")
 
-          index_path.write_text(html, encoding="utf-8")
-          (site / "files.json").write_text(index_json + "\n", encoding="utf-8")
-          (site / ".nojekyll").write_text("", encoding="utf-8")
+          total = sum(len(category["files"]) for category in output)
+          print(f"Indexed files: {total}")
 
-          print(f"Indexed files: {sum(len(category['files']) for category in output)}")
+          index_html = site / "index.html"
+          if not index_html.exists():
+              raise SystemExit("docs/index.html 不存在，停止部署。")
+
+          html = index_html.read_text(encoding="utf-8")
+          if "files.js" not in html or "loadFromExternalIndex" not in html:
+              raise SystemExit(
+                  "docs/index.html 不是 v12 files.js 版本。"
+                  "请用 proxykit-h5-golden-fluid-v12-files-js.html 覆盖 docs/index.html。"
+              )
           PY
 
       - name: Publish to gh-pages branch
