@@ -30,6 +30,7 @@ jobs:
   deploy:
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository without Node actions
         env:
@@ -48,6 +49,7 @@ jobs:
           set -euo pipefail
           rm -rf /tmp/proxykit-pages
           mkdir -p /tmp/proxykit-pages
+
           python3 <<'PY'
           import html
           import json
@@ -63,28 +65,16 @@ jobs:
           GH_BASE = f"https://github.com/{OWNER}/{REPO}/blob/{BRANCH}/"
 
           CATEGORIES = [
-              {"key": "Rule", "title": "规则", "icon": "R", "type": "normal"},
-              {"key": "Scripts", "title": "脚本", "icon": "JS", "type": "normal"},
-              {"key": "SurgeModule", "title": "模块", "icon": "M", "type": "normal"},
-              {"key": "Calendar", "title": "日历", "icon": "C", "type": "calendar"},
-          ]
-
-          CALENDAR_FILE = "Calendar/cn-mainland-holidays-2026-cn-full-v2.ics"
-          CALENDAR_REPO = GH_BASE + quote(CALENDAR_FILE)
-          CALENDAR_RAW = RAW_BASE + quote(CALENDAR_FILE)
-          CALENDAR_WEBCAL = CALENDAR_RAW.replace("https://", "webcal://", 1)
-          CALENDAR_TITLE = "中国大陆节假日与中国纪念日 2026"
-          CALENDAR_DESC = "中国大陆 2026 法定节假日、调休、中国传统节日、二十四节气、中国常用纪念日。"
-          CALENDAR_COUNTS = [
-              ("放假", 7, "holiday"),
-              ("调休上班", 6, "workday"),
-              ("传统节日", 22, "traditional"),
-              ("节气", 24, "solar"),
-              ("纪念日", 28, "memorial"),
+              {"key": "Rule", "title": "规则", "icon": "R"},
+              {"key": "Scripts", "title": "脚本", "icon": "JS"},
+              {"key": "SurgeModule", "title": "模块", "icon": "M"},
           ]
 
           def quote_path(path: str) -> str:
               return "/".join(quote(part) for part in path.split("/"))
+
+          def esc(value) -> str:
+              return html.escape(str(value), quote=True)
 
           def last_commit_time(path: str) -> str:
               try:
@@ -104,16 +94,16 @@ jobs:
                   value = value.split("+", 1)[0]
               return "更新：" + value[:16].replace("-", "/")
 
-          def esc(value) -> str:
-              return html.escape(str(value), quote=True)
+          def raw_url(path: str) -> str:
+              return RAW_BASE + quote_path(path)
+
+          def github_url(path: str) -> str:
+              return GH_BASE + quote_path(path)
 
           files = []
           grouped = []
 
           for category in CATEGORIES:
-              if category["type"] != "normal":
-                  continue
-
               folder = Path(category["key"])
               items = []
 
@@ -124,7 +114,7 @@ jobs:
 
                       path = item.as_posix()
                       updated = last_commit_time(path)
-                      raw = RAW_BASE + quote_path(path)
+                      raw = raw_url(path)
 
                       data = {
                           "name": item.name,
@@ -135,7 +125,7 @@ jobs:
                           "updatedAt": updated,
                           "updatedText": short_time(updated),
                           "raw": raw,
-                          "github": GH_BASE + quote_path(path),
+                          "github": github_url(path),
                           "install": "surge:///install-module?url=" + raw if category["key"] == "SurgeModule" and item.name.endswith(".sgmodule") else "",
                       }
 
@@ -148,34 +138,8 @@ jobs:
                   "files": items,
               })
 
-          calendar_updated = last_commit_time(CALENDAR_FILE)
-          calendar_updated_text = short_time(calendar_updated)
-          calendar_exists = Path(CALENDAR_FILE).exists()
-          calendar_size = Path(CALENDAR_FILE).stat().st_size if calendar_exists else 0
-
-          calendar_meta = {
-              "title": "日历",
-              "folder": "Calendar",
-              "files": [{
-                  "name": "中国大陆节假日与中国纪念日 2026",
-                  "path": CALENDAR_FILE,
-                  "folder": "Calendar",
-                  "title": "日历",
-                  "icon": "C",
-                  "updatedAt": calendar_updated,
-                  "updatedText": calendar_updated_text,
-                  "raw": CALENDAR_RAW,
-                  "webcal": CALENDAR_WEBCAL,
-                  "github": CALENDAR_REPO,
-                  "count": 87,
-                  "size": calendar_size,
-              }],
-          }
-
-          grouped.append(calendar_meta)
-
           def file_card(file):
-              install = f'<a class="action install-action" href="{esc(file["install"])}">安装</a>' if file["install"] else ""
+              install = f'<a class="action" href="{esc(file["install"])}">安装</a>' if file["install"] else ""
               search = esc((file["name"] + " " + file["path"] + " " + file["title"]).lower())
 
               return f'''
@@ -195,33 +159,143 @@ jobs:
                   </div>
                 </article>'''
 
-          def calendar_card():
-              chips = "".join(
-                  f'<span class="cal-chip {cls}">{name} <b>{count}</b></span>'
-                  for name, count, cls in CALENDAR_COUNTS
-              )
+          def load_calendar_index():
+              index_path = Path("Calendar/calendar-index.json")
+              if index_path.exists():
+                  try:
+                      return json.loads(index_path.read_text(encoding="utf-8"))
+                  except Exception:
+                      pass
 
-              search = esc("calendar 日历 中国大陆 节假日 调休 传统节日 节气 纪念日 ios 订阅".lower())
+              calendar_dir = Path("Calendar")
+              years = []
+
+              if calendar_dir.exists():
+                  for item in sorted(calendar_dir.glob("cn-mainland-*.ics")):
+                      name = item.name
+                      if name == "cn-mainland-latest.ics":
+                          continue
+
+                      year = None
+                      stem = item.stem
+                      parts = stem.split("-")
+                      if parts and parts[-1].isdigit():
+                          year = int(parts[-1])
+
+                      if not year or year < 2026:
+                          continue
+
+                      path = item.as_posix()
+                      years.append({
+                          "year": year,
+                          "title": f"{year} 年数据",
+                          "name": f"中国大陆节假日与中国纪念日 {year}",
+                          "path": path,
+                          "raw": raw_url(path),
+                          "webcal": raw_url(path).replace("https://", "webcal://", 1),
+                          "count": 0,
+                          "size": item.stat().st_size,
+                      })
+
+              latest_path = Path("Calendar/cn-mainland-latest.ics")
+              latest = {
+                  "title": "永久更新订阅",
+                  "name": "中国大陆节假日与中国纪念日 最新订阅",
+                  "path": latest_path.as_posix(),
+                  "raw": raw_url(latest_path.as_posix()),
+                  "webcal": raw_url(latest_path.as_posix()).replace("https://", "webcal://", 1),
+                  "years": [item["year"] for item in years[-2:]],
+                  "count": 0,
+                  "size": latest_path.stat().st_size if latest_path.exists() else 0,
+              }
+
+              return {
+                  "version": 1,
+                  "startYear": 2026,
+                  "targetYear": years[-1]["year"] if years else 2026,
+                  "latest": latest,
+                  "years": years,
+              }
+
+          calendar_index = load_calendar_index()
+          latest_calendar = calendar_index.get("latest", {})
+          yearly_calendars = [
+              item for item in calendar_index.get("years", [])
+              if int(item.get("year", 0)) >= 2026
+          ]
+          yearly_calendars.sort(key=lambda item: int(item.get("year", 0)))
+
+          def calendar_latest_card(item):
+              years = item.get("years") or []
+              years_text = " / ".join(str(y) for y in years) if years else "自动滚动"
+              raw = item.get("raw") or raw_url(item.get("path", "Calendar/cn-mainland-latest.ics"))
+              webcal = item.get("webcal") or raw.replace("https://", "webcal://", 1)
+              path = item.get("path", "Calendar/cn-mainland-latest.ics")
+              github = github_url(path)
+              count = item.get("count", 0)
+
+              search = esc("calendar 日历 永久更新 最新订阅 中国大陆 节假日 调休 传统节日 节气 纪念日 ios".lower())
 
               return f'''
-                <article class="card calendar-card" data-folder="Calendar" data-search="{search}">
+                <article class="card calendar-card latest-calendar" data-folder="Calendar" data-search="{search}">
                   <div class="card-head">
                     <span class="file-icon calendar-icon">C</span>
-                    <span class="type-pill">日历</span>
+                    <span class="type-pill">永久更新</span>
                   </div>
-                  <h3>{esc(CALENDAR_TITLE)}</h3>
-                  <p class="cal-desc">{esc(CALENDAR_DESC)}</p>
-                  <div class="cal-chips">{chips}</div>
+                  <h3>永久更新订阅</h3>
+                  <p class="cal-desc">包含去年与本年数据，订阅这个地址即可长期自动更新。当前覆盖：{esc(years_text)}。</p>
                   <div class="actions cal-actions">
-                    <a class="action primary-action" href="{esc(CALENDAR_WEBCAL)}">iOS 订阅</a>
-                    <a class="action" href="{esc(CALENDAR_RAW)}">Raw .ics</a>
-                    <a class="action" href="{esc(CALENDAR_REPO)}">仓库文件</a>
-                    <button class="action copy-btn" type="button" data-copy="{esc(CALENDAR_WEBCAL)}">复制订阅</button>
+                    <a class="action primary-action" href="{esc(webcal)}">iOS 订阅</a>
+                    <a class="action" href="{esc(raw)}">Raw .ics</a>
+                    <a class="action" href="{esc(github)}">仓库文件</a>
+                    <button class="action copy-btn" type="button" data-copy="{esc(webcal)}">复制订阅</button>
                   </div>
-                  <p class="updated cal-meta">事件数：87 · {esc(calendar_updated_text)} · GitHub Actions 自动更新</p>
+                  <p class="updated cal-meta">事件数：{esc(count)} · 文件：{esc(path)}</p>
                 </article>'''
 
-          cards_html = "\n".join(file_card(file) for file in files) + "\n" + calendar_card()
+          def calendar_year_card(item):
+              year = int(item.get("year", 0))
+              title = item.get("title") or f"{year} 年数据"
+              raw = item.get("raw") or raw_url(item.get("path", f"Calendar/cn-mainland-{year}.ics"))
+              webcal = item.get("webcal") or raw.replace("https://", "webcal://", 1)
+              path = item.get("path", f"Calendar/cn-mainland-{year}.ics")
+              github = github_url(path)
+              count = item.get("count", 0)
+
+              search = esc(f"calendar 日历 {year} 中国大陆 节假日 调休 传统节日 节气 纪念日 ios".lower())
+
+              return f'''
+                <article class="card calendar-card year-calendar" data-folder="Calendar" data-search="{search}">
+                  <div class="card-head">
+                    <span class="file-icon calendar-icon">C</span>
+                    <span class="type-pill">{esc(year)}</span>
+                  </div>
+                  <h3>{esc(title)}</h3>
+                  <p class="cal-desc">仅包含 {esc(year)} 年数据，适合单年订阅或备份。</p>
+                  <div class="actions cal-actions">
+                    <a class="action primary-action" href="{esc(webcal)}">iOS 订阅</a>
+                    <a class="action" href="{esc(raw)}">Raw .ics</a>
+                    <a class="action" href="{esc(github)}">仓库文件</a>
+                    <button class="action copy-btn" type="button" data-copy="{esc(webcal)}">复制订阅</button>
+                  </div>
+                  <p class="updated cal-meta">事件数：{esc(count)} · 文件：{esc(path)}</p>
+                </article>'''
+
+          calendar_cards = []
+          calendar_cards.append(calendar_latest_card(latest_calendar))
+          calendar_cards.extend(calendar_year_card(item) for item in yearly_calendars)
+
+          calendar_group = {
+              "title": "日历",
+              "folder": "Calendar",
+              "files": [
+                  latest_calendar,
+                  *yearly_calendars,
+              ],
+          }
+          grouped.append(calendar_group)
+
+          cards_html = "\n".join(file_card(file) for file in files) + "\n" + "\n".join(calendar_cards)
           total = len(files)
           categories_json = esc(json.dumps(grouped, ensure_ascii=False, indent=2))
 
@@ -666,6 +740,14 @@ jobs:
                 padding: clamp(24px, 4vw, 34px);
               }
 
+              .year-calendar {
+                grid-column: auto;
+              }
+
+              .latest-calendar {
+                grid-column: 1 / -1;
+              }
+
               .card-head {
                 display: flex;
                 align-items: center;
@@ -705,7 +787,7 @@ jobs:
                 word-break: break-word;
               }
 
-              .calendar-card h3 {
+              .latest-calendar h3 {
                 max-width: 760px;
                 font-size: clamp(25px, 3.6vw, 38px);
               }
@@ -800,26 +882,6 @@ jobs:
                 font-weight: 950;
               }
 
-              .holiday {
-                color: #c24132;
-              }
-
-              .workday {
-                color: #a65f17;
-              }
-
-              .traditional {
-                color: #9b6b1f;
-              }
-
-              .solar {
-                color: #16734a;
-              }
-
-              .memorial {
-                color: #6841a8;
-              }
-
               @media (prefers-color-scheme: dark) {
                 .hero::before,
                 .card::before {
@@ -830,26 +892,6 @@ jobs:
                 h1 {
                   color: #f8efda;
                   text-shadow: 0 18px 70px rgba(232, 201, 122, .10);
-                }
-
-                .holiday {
-                  color: #ff9b8f;
-                }
-
-                .workday {
-                  color: #e8ad65;
-                }
-
-                .traditional {
-                  color: #e8c97a;
-                }
-
-                .solar {
-                  color: #a8d982;
-                }
-
-                .memorial {
-                  color: #d9bcff;
                 }
               }
 
@@ -900,6 +942,10 @@ jobs:
               @media (max-width: 820px) {
                 .grid {
                   grid-template-columns: 1fr;
+                }
+
+                .year-calendar {
+                  grid-column: 1 / -1;
                 }
               }
 
@@ -991,7 +1037,7 @@ jobs:
                   font-size: 22px;
                 }
 
-                .calendar-card h3 {
+                .latest-calendar h3 {
                   font-size: 25px;
                 }
 
@@ -1009,6 +1055,7 @@ jobs:
               }
             </style>
           </head>
+
           <body>
             <main class="wrap">
               <header class="topbar">
@@ -1143,18 +1190,23 @@ jobs:
           out.joinpath("files.json").write_text(json.dumps(grouped, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           out.joinpath(".nojekyll").write_text("", encoding="utf-8")
 
-          print(f"Rendered {total} normal files plus calendar card.")
+          print(f"Rendered {total} normal files plus {len(calendar_cards)} calendar cards.")
           PY
 
       - name: Publish to gh-pages branch
         run: |
           set -euo pipefail
+
           git checkout --orphan gh-pages
           git rm -rf . >/dev/null 2>&1 || true
+
           cp -a /tmp/proxykit-pages/. .
+
           git add -A
+
           git commit -m "deploy: render static GitHub Pages" || {
             echo "No changes to deploy"
             exit 0
           }
+
           git push --force origin gh-pages
