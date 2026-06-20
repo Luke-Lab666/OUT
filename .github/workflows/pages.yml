@@ -369,7 +369,7 @@ jobs:
                   if (show) n++;
                 }}
                 const label = active === 'Calendar' ? '个日历' : '项';
-                count.textContent = `共 ${{n}} ${{label}}`;
+                count.textContent = '共 ' + n + ' ' + label;
                 empty.style.display = n ? 'none' : 'block';
               }}
 
