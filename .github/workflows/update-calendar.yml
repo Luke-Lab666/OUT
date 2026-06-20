@@ -668,18 +668,26 @@ jobs:
               text = text.replace("－", "-")
               text = text.replace("—", "-")
               text = text.replace("／", "/")
+
+              # 关键修复：香港天文台页面抽出来是“小寒, 1, 月, 5, 日, 16:23”
+              text = text.replace(",", " ")
+              text = text.replace("，", " ")
+              text = text.replace("、", " ")
+
               text = text.replace("年", "年 ")
-              text = text.replace("月", "月 ")
-              text = text.replace("日", "日 ")
-              text = text.replace("時", "时 ")
-              text = text.replace("时", "时 ")
-              text = text.replace("分", "分 ")
+              text = text.replace("月", " 月 ")
+              text = text.replace("日", " 日 ")
+              text = text.replace("時", " 时 ")
+              text = text.replace("时", " 时 ")
+              text = text.replace("分", " 分 ")
+
               text = text.replace("驚蟄", "惊蛰")
               text = text.replace("穀雨", "谷雨")
               text = text.replace("小滿", "小满")
               text = text.replace("芒種", "芒种")
               text = text.replace("處暑", "处暑")
               text = text.replace("節氣", "节气")
+
               text = re.sub(r"[ \t\r\f\v]+", " ", text)
               text = re.sub(r"\n+", "\n", text)
 
@@ -700,7 +708,7 @@ jobs:
 
                       patterns = [
                           # 小寒 1 月 5 日 16:23
-                          rf"{re.escape(variant)}\s*(\d{{1,2}})\s*月\s*(\d{{1,2}})\s*日\s*(\d{{1,2}}):(\d{{2}})",
+                          rf"{re.escape(variant)}\s+(\d{{1,2}})\s+月\s+(\d{{1,2}})\s+日\s+(\d{{1,2}}):(\d{{2}})",
 
                           # 小寒 1 5 16:23
                           rf"{re.escape(variant)}\s+(\d{{1,2}})\s+(\d{{1,2}})\s+(\d{{1,2}}):(\d{{2}})",
