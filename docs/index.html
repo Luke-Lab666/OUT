@@ -960,7 +960,7 @@
       </div>
 
       <div class="list-meta">
-        <span id="项Meta">正在加载文件…</span>
+        <span id="resultMeta">正在读取仓库文件…</span>
         
       </div>
 
@@ -974,7 +974,7 @@
       </div>
 
       <div class="empty" id="emptyState">
-        没找到，换个关键词试试。
+        没读取到文件，刷新一下或稍后再试。
       </div>
     </section>
   </main>
@@ -1002,6 +1002,7 @@
       const RAW_BASE = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/`;
       const GH_BASE = `https://github.com/${REPO_OWNER}/${REPO_NAME}/blob/${BRANCH}/`;
       const API_TREE = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/trees/${BRANCH}?recursive=1`;
+      const API_CONTENTS_BASE = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents`;
 
       const $ = (selector, root = document) => root.querySelector(selector);
       const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -1122,10 +1123,49 @@
         return '';
       }
 
+      async function fetchJson(url, timeout = 9000) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeout);
+
+        try {
+          const response = await fetch(url, {
+            cache: 'no-store',
+            signal: controller.signal,
+            headers: { 'Accept': 'application/vnd.github+json' }
+          });
+          if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+          return await response.json();
+        } finally {
+          clearTimeout(timer);
+        }
+      }
+
+      async function loadFromGitHubContents() {
+        async function walk(path) {
+          const url = `${API_CONTENTS_BASE}/${encodePath(path)}?ref=${encodeURIComponent(BRANCH)}`;
+          const entries = await fetchJson(url, 9000);
+          const list = Array.isArray(entries) ? entries : [];
+          const files = [];
+
+          for (const entry of list) {
+            if (entry.type === 'file') {
+              const normalized = normalizeFile(entry.path);
+              if (normalized) files.push(normalized);
+            } else if (entry.type === 'dir') {
+              const children = await walk(entry.path);
+              files.push(...children);
+            }
+          }
+
+          return files;
+        }
+
+        const groups = await Promise.all(FOLDERS.map(meta => walk(meta.folder)));
+        return groupFiles(groups.flat());
+      }
+
       async function loadFromGitHubTree() {
-        const response = await fetch(API_TREE, { cache:'no-store' });
-        if (!response.ok) throw new Error(`GitHub API ${response.status}`);
-        const data = await response.json();
+        const data = await fetchJson(API_TREE, 9000);
 
         const files = (data.tree || [])
           .filter(item => item.type === 'blob')
@@ -1140,11 +1180,17 @@
       async function loadIndex() {
         try {
           state.categories = await loadFromGitHubTree();
-          state.source = 'GitHub API';
-        } catch (githubError) {
-          state.categories = groupFiles([]);
-          state.source = 'offline';
-          console.warn(githubError);
+          state.source = 'GitHub Tree API';
+        } catch (treeError) {
+          console.warn('Tree API failed, fallback to Contents API:', treeError);
+          try {
+            state.categories = await loadFromGitHubContents();
+            state.source = 'GitHub Contents API';
+          } catch (contentsError) {
+            state.categories = groupFiles([]);
+            state.source = 'offline';
+            console.warn('Contents API failed:', contentsError);
+          }
         }
 
         state.files = state.categories.flatMap(category => category.files);
@@ -1204,24 +1250,39 @@
       }
 
       async function fetchFileUpdatedAt(file) {
+        const cacheKey = `proxykit:updated:${file.path}`;
+
         if (file.updatedAt) {
           state.commitDateCache[file.path] = file.updatedAt;
           return file.updatedAt;
         }
 
         if (state.commitDateCache[file.path]) return state.commitDateCache[file.path];
+
+        try {
+          const cached = localStorage.getItem(cacheKey);
+          if (cached) {
+            state.commitDateCache[file.path] = cached;
+            return cached;
+          }
+        } catch {}
+
         try {
           const endpoint = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits?sha=${BRANCH}&path=${encodeURIComponent(file.path)}&per_page=1`;
-          const response = await fetch(endpoint, { cache: 'no-store' });
-          if (!response.ok) throw new Error(`commit api ${response.status}`);
-          const data = await response.json();
+          const data = await fetchJson(endpoint, 7000);
           const updatedAt = data?.[0]?.commit?.committer?.date || data?.[0]?.commit?.author?.date || '';
           state.commitDateCache[file.path] = updatedAt;
+
+          if (updatedAt) {
+            try { localStorage.setItem(cacheKey, updatedAt); } catch {}
+          }
+
           return updatedAt;
         } catch (error) {
           console.warn('fetchFileUpdatedAt failed:', file.path, error);
           state.commitDateCache[file.path] = '';
           return '';
+        }
       }
 
       function hydrateVisibleDates(files) {
@@ -1237,7 +1298,7 @@
 
       function renderFiles() {
         const files = visibleFiles();
-        $('#项Meta').textContent = `共 ${files.length} 项 · ${state.activeFolder === 'all' ? '全部分类' : categoryMeta(state.activeFolder).title}`;
+        $('#resultMeta').textContent = `共 ${files.length} 项 · ${state.activeFolder === 'all' ? '全部分类' : categoryMeta(state.activeFolder).title}`;
 
         const grid = $('#fileGrid');
         const empty = $('#emptyState');
