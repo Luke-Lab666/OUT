@@ -7,10 +7,19 @@ const DEFAULT_DOH = "https://8.8.4.4/dns-query";
 const DEFAULT_TTL = toInt($.arg.ttl, 60);
 const MIN_TTL = toInt($.arg.min_ttl, 1);
 const MAX_TTL = toInt($.arg.max_ttl, 600);
-const TIMEOUT = toInt($.arg.timeout, 2);
-const MAX_DOH = toInt($.arg.max_doh || $.arg.race, 2); // 0 = all
+const TIMEOUT = toFloat($.arg.timeout, 2);
+const MAX_DOH = toInt($.arg.max_doh || $.arg.race, 2);
+const HARD_CAP = Math.max(1, toInt($.arg.hard_cap, 4));
+const STAGGER = Math.max(0, toInt($.arg.stagger, 120));
+const COOLDOWN = Math.max(0, toInt($.arg.cooldown, 60)) * 1000;
+const FAIL_LIMIT = Math.max(1, toInt($.arg.fail_limit, 2));
+const STATE_TTL = Math.max(60, toInt($.arg.state_ttl, 86400)) * 1000;
 const FALLBACK = String($.arg.fallback || "0") === "1";
 const LOG = String($.arg.log || "0") === "1";
+const STORE_KEY = "DNSLite.Health.v3";
+
+const now = Date.now();
+const state = loadState();
 
 (async () => {
   if (!$.domain) return done({});
@@ -24,6 +33,7 @@ const LOG = String($.arg.log || "0") === "1";
   log(`[${$.domain}] type=${type}, doh=${dohList.join(",")}, edns=${edns || "off"}`);
 
   let result;
+
   if (type === "a" || type === "v4-only") {
     result = await resolveFast(dohList, ["A"], edns);
   } else if (type === "aaaa" || type === "v6-only") {
@@ -49,41 +59,59 @@ const LOG = String($.arg.log || "0") === "1";
   const addresses = unique(result.addresses);
   if (addresses.length === 0) throw new Error("Empty DNS answer");
 
-  log(`[${$.domain}] from=${result.url}, ttl=${result.ttl}, addresses=${addresses.join(",")}`);
-  done({ addresses, ttl: result.ttl });
+  log(`[${$.domain}] from=${result.url}, rtt=${result.rtt}ms, ttl=${result.ttl}, addresses=${addresses.join(",")}`);
+
+  done({
+    addresses,
+    ttl: result.ttl,
+  });
 })().catch((e) => {
   log(`[${$.domain}] failed: ${messageOf(e)}`);
   done(FALLBACK ? {} : { addresses: [], ttl: DEFAULT_TTL });
 });
 
 async function resolveFast(dohList, types, edns) {
-  const urls = MAX_DOH > 0 ? dohList.slice(0, MAX_DOH) : dohList;
+  const urls = pickDohs(dohList);
+  if (urls.length === 0) throw new Error("No DoH server selected");
+
+  log(`[${$.domain}] selected=${urls.join(",")}`);
+
   const tasks = urls.map((url) => () => queryOneDoh(url, types, edns));
-  return firstFulfilled(tasks);
+  return firstFulfilledStaggered(tasks, STAGGER);
 }
 
 async function queryOneDoh(url, types, edns) {
-  const results = await Promise.all(types.map((type) => query(url, $.domain, type, edns)));
+  const started = Date.now();
 
-  const addresses = [];
-  const ttls = [];
+  try {
+    const results = await Promise.all(types.map((type) => query(url, $.domain, type, edns)));
+    const addresses = [];
+    const ttls = [];
 
-  for (const res of results) {
-    for (const ans of res.answers) {
-      if (types.indexOf(ans.type) !== -1 && ans.address) {
-        addresses.push(ans.address);
-        if (ans.ttl > 0) ttls.push(ans.ttl);
+    for (const res of results) {
+      for (const ans of res.answers) {
+        if (types.indexOf(ans.type) !== -1 && ans.address) {
+          addresses.push(ans.address);
+          if (ans.ttl > 0) ttls.push(ans.ttl);
+        }
       }
     }
+
+    if (addresses.length === 0) throw new Error(`[${url}] empty answer`);
+
+    const rtt = Date.now() - started;
+    markDohSuccess(url, rtt);
+
+    return {
+      url,
+      rtt,
+      addresses,
+      ttl: normalizeTTL(ttls.length ? Math.min.apply(null, ttls) : DEFAULT_TTL),
+    };
+  } catch (e) {
+    markDohFailure(url, messageOf(e));
+    throw e;
   }
-
-  if (addresses.length === 0) throw new Error(`[${url}] empty answer`);
-
-  return {
-    url,
-    addresses,
-    ttl: normalizeTTL(ttls.length ? Math.min.apply(null, ttls) : DEFAULT_TTL),
-  };
 }
 
 async function query(url, domain, type, edns) {
@@ -129,6 +157,133 @@ function dohGet(url, queryBytes) {
   });
 }
 
+function pickDohs(dohList) {
+  const limit = MAX_DOH > 0
+    ? Math.min(MAX_DOH, HARD_CAP, dohList.length)
+    : Math.min(HARD_CAP, dohList.length);
+
+  const items = dohList.map((url, index) => {
+    const info = (state.doh && state.doh[url]) || {};
+    return {
+      url,
+      index,
+      info,
+      down: (info.downUntil || 0) > now,
+    };
+  });
+
+  const available = items.filter((item) => !item.down);
+  const pool = available.length > 0 ? available : items;
+
+  pool.sort((a, b) => {
+    const aLastOk = a.info.lastOk || 0;
+    const bLastOk = b.info.lastOk || 0;
+    const aDown = a.down ? 1 : 0;
+    const bDown = b.down ? 1 : 0;
+
+    if (aDown !== bDown) return aDown - bDown;
+    if (aLastOk !== bLastOk) return bLastOk - aLastOk;
+
+    const aRtt = a.info.rtt || 999999;
+    const bRtt = b.info.rtt || 999999;
+    if (aRtt !== bRtt) return aRtt - bRtt;
+
+    const aFail = a.info.fail || 0;
+    const bFail = b.info.fail || 0;
+    if (aFail !== bFail) return aFail - bFail;
+
+    return a.index - b.index;
+  });
+
+  return pool.slice(0, limit).map((item) => item.url);
+}
+
+function markDohSuccess(url, rtt) {
+  const info = ensureDohInfo(url);
+
+  info.ok = (info.ok || 0) + 1;
+  info.fail = 0;
+  info.rtt = rtt;
+  info.lastOk = Date.now();
+  info.lastError = "";
+  info.downUntil = 0;
+
+  saveState();
+}
+
+function markDohFailure(url, error) {
+  const info = ensureDohInfo(url);
+
+  info.fail = (info.fail || 0) + 1;
+  info.lastFail = Date.now();
+  info.lastError = String(error || "").slice(0, 120);
+
+  if (info.fail >= FAIL_LIMIT) {
+    info.downUntil = Date.now() + COOLDOWN;
+    log(`[${$.domain}] cooldown ${url} for ${COOLDOWN / 1000}s: ${info.lastError}`);
+  }
+
+  saveState();
+}
+
+function ensureDohInfo(url) {
+  if (!state.doh) state.doh = {};
+  if (!state.doh[url]) state.doh[url] = {};
+  return state.doh[url];
+}
+
+function loadState() {
+  try {
+    const raw = $persistentStore.read(STORE_KEY);
+    const obj = raw ? JSON.parse(raw) : {};
+
+    if (!obj || typeof obj !== "object") return { v: 3, doh: {} };
+    if (!obj.doh || typeof obj.doh !== "object") obj.doh = {};
+
+    return obj;
+  } catch (e) {
+    return { v: 3, doh: {} };
+  }
+}
+
+function saveState() {
+  try {
+    state.v = 3;
+    state.updated = Date.now();
+    pruneState();
+    $persistentStore.write(JSON.stringify(state), STORE_KEY);
+  } catch (e) {
+    log(`save state failed: ${messageOf(e)}`);
+  }
+}
+
+function pruneState() {
+  if (!state.doh) return;
+
+  const entries = [];
+  const cutoff = Date.now() - STATE_TTL;
+
+  for (const url in state.doh) {
+    if (!Object.prototype.hasOwnProperty.call(state.doh, url)) continue;
+
+    const info = state.doh[url] || {};
+    const ts = Math.max(info.lastOk || 0, info.lastFail || 0, info.downUntil || 0);
+
+    if (ts && ts < cutoff) {
+      delete state.doh[url];
+      continue;
+    }
+
+    entries.push({ url, ts });
+  }
+
+  entries.sort((a, b) => b.ts - a.ts);
+
+  for (let i = 20; i < entries.length; i++) {
+    delete state.doh[entries[i].url];
+  }
+}
+
 function encodeDNSQuery(domain, type, edns) {
   const bytes = [];
   const qtype = rrType(type);
@@ -157,9 +312,11 @@ function encodeDNSQuery(domain, type, edns) {
     writeU16(rdata, ecs.family);
     writeU8(rdata, ecs.prefix);
     writeU8(rdata, 0);
+
     for (const b of ecs.address) writeU8(rdata, b);
 
     writeU16(bytes, rdata.length);
+
     for (const b of rdata) writeU8(bytes, b);
   }
 
@@ -168,16 +325,29 @@ function encodeDNSQuery(domain, type, edns) {
 
 function decodeDNSResponse(bytes) {
   let offset = 0;
+
   if (bytes.length < 12) throw new Error("DNS response too short");
 
-  const id = readU16(bytes, offset); offset += 2;
-  const flags = readU16(bytes, offset); offset += 2;
-  const qd = readU16(bytes, offset); offset += 2;
-  const an = readU16(bytes, offset); offset += 2;
-  const ns = readU16(bytes, offset); offset += 2;
-  const ar = readU16(bytes, offset); offset += 2;
+  const id = readU16(bytes, offset);
+  offset += 2;
+
+  const flags = readU16(bytes, offset);
+  offset += 2;
+
+  const qd = readU16(bytes, offset);
+  offset += 2;
+
+  const an = readU16(bytes, offset);
+  offset += 2;
+
+  const ns = readU16(bytes, offset);
+  offset += 2;
+
+  const ar = readU16(bytes, offset);
+  offset += 2;
 
   const rcode = flags & 0x000f;
+
   if (rcode !== 0) throw new Error(`DNS RCODE ${rcode}`);
 
   for (let i = 0; i < qd; i++) {
@@ -186,9 +356,11 @@ function decodeDNSResponse(bytes) {
   }
 
   const answers = [];
+
   for (let i = 0; i < an; i++) {
     const rr = readRecord(bytes, offset);
     offset = rr.offset;
+
     if (rr.answer) answers.push(rr.answer);
   }
 
@@ -199,10 +371,18 @@ function readRecord(bytes, offset) {
   const nameInfo = readName(bytes, offset);
   offset = nameInfo.offset;
 
-  const typeCode = readU16(bytes, offset); offset += 2;
-  const klass = readU16(bytes, offset); offset += 2;
-  const ttl = readU32(bytes, offset); offset += 4;
-  const rdlen = readU16(bytes, offset); offset += 2;
+  const typeCode = readU16(bytes, offset);
+  offset += 2;
+
+  const klass = readU16(bytes, offset);
+  offset += 2;
+
+  const ttl = readU32(bytes, offset);
+  offset += 4;
+
+  const rdlen = readU16(bytes, offset);
+  offset += 2;
+
   const rdataOffset = offset;
   const nextOffset = offset + rdlen;
 
@@ -236,6 +416,7 @@ function readName(bytes, offset) {
 
   while (true) {
     if (pos >= bytes.length) throw new Error("Invalid DNS name");
+
     const len = bytes[pos];
 
     if (len === 0) {
@@ -246,40 +427,62 @@ function readName(bytes, offset) {
 
     if ((len & 0xc0) === 0xc0) {
       if (pos + 1 >= bytes.length) throw new Error("Invalid DNS pointer");
+
       const ptr = ((len & 0x3f) << 8) | bytes[pos + 1];
+
       if (!jumped) nextOffset = pos + 2;
+
       pos = ptr;
       jumped = true;
       jumps += 1;
+
       if (jumps > 32) throw new Error("DNS pointer loop");
+
       continue;
     }
 
     if ((len & 0xc0) !== 0) throw new Error("Unsupported DNS label");
 
     pos += 1;
+
     if (pos + len > bytes.length) throw new Error("Invalid DNS label length");
 
     let label = "";
-    for (let i = 0; i < len; i++) label += String.fromCharCode(bytes[pos + i]);
+
+    for (let i = 0; i < len; i++) {
+      label += String.fromCharCode(bytes[pos + i]);
+    }
+
     labels.push(label);
     pos += len;
 
     if (!jumped) nextOffset = pos;
   }
 
-  return { name: labels.join("."), offset: nextOffset };
+  return {
+    name: labels.join("."),
+    offset: nextOffset,
+  };
 }
 
 function buildECS(ip) {
   if (isIPv4(ip)) {
     const raw = ip.split(".").map((n) => parseInt(n, 10));
-    return { family: 1, prefix: 24, address: raw.slice(0, 3) };
+    return {
+      family: 1,
+      prefix: 24,
+      address: raw.slice(0, 3),
+    };
   }
 
   const v6 = ipv6ToBytes(ip);
+
   if (v6) {
-    return { family: 2, prefix: 56, address: Array.from(v6.slice(0, 7)) };
+    return {
+      family: 2,
+      prefix: 56,
+      address: Array.from(v6.slice(0, 7)),
+    };
   }
 
   return null;
@@ -299,10 +502,11 @@ function getEDNS() {
   }
 
   if (edns === undefined || edns === null || edns === "") {
-    edns = "114.114.114.114";
+    edns = "0";
   }
 
   edns = String(edns).trim();
+
   if (/^(0|false|off|none|no)$/i.test(edns)) return null;
 
   if (!isIPv4(edns) && !ipv6ToBytes(edns)) {
@@ -314,27 +518,44 @@ function getEDNS() {
 }
 
 function getDohList(input) {
-  return String(input)
+  const seen = {};
+  const out = [];
+
+  String(input)
     .split(/\s*,\s*/)
     .map((s) => s.trim())
-    .filter((s) => /^https?:\/\//i.test(s));
+    .filter((s) => /^https?:\/\//i.test(s))
+    .forEach((url) => {
+      const normalized = url.replace(/\s+/g, "");
+
+      if (!normalized || seen[normalized]) return;
+
+      seen[normalized] = true;
+      out.push(normalized);
+    });
+
+  return out;
 }
 
 function rrType(type) {
   type = String(type).toUpperCase();
+
   if (type === "A") return 1;
   if (type === "AAAA") return 28;
+
   throw new Error(`Unsupported query type: ${type}`);
 }
 
 function normalizeTTL(ttl) {
   let t = toInt(ttl, DEFAULT_TTL);
+
   if (t < MIN_TTL) t = MIN_TTL;
   if (t > MAX_TTL) t = MAX_TTL;
+
   return t;
 }
 
-function firstFulfilled(tasks) {
+function firstFulfilledStaggered(tasks, delay) {
   return new Promise((resolve, reject) => {
     if (!tasks.length) return reject(new Error("No task"));
 
@@ -342,19 +563,33 @@ function firstFulfilled(tasks) {
     let lastError = null;
     let settled = false;
 
-    for (const task of tasks) {
+    function start(index) {
+      if (settled) return;
+
       Promise.resolve()
-        .then(task)
+        .then(tasks[index])
         .then((value) => {
           if (settled) return;
+
           settled = true;
           resolve(value);
         })
         .catch((e) => {
           lastError = e;
           pending -= 1;
-          if (!settled && pending === 0) reject(lastError || new Error("All tasks failed"));
+
+          if (!settled && pending === 0) {
+            reject(lastError || new Error("All DoH queries failed"));
+          }
         });
+    }
+
+    for (let i = 0; i < tasks.length; i++) {
+      if (i === 0 || delay <= 0) {
+        start(i);
+      } else {
+        setTimeout(() => start(i), delay * i);
+      }
     }
   });
 }
@@ -366,6 +601,7 @@ function base64url(bytes) {
 
   for (; i + 2 < bytes.length; i += 3) {
     const n = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2];
+
     out += table[(n >> 18) & 63];
     out += table[(n >> 12) & 63];
     out += table[(n >> 6) & 63];
@@ -373,12 +609,15 @@ function base64url(bytes) {
   }
 
   const remain = bytes.length - i;
+
   if (remain === 1) {
     const n = bytes[i] << 16;
+
     out += table[(n >> 18) & 63];
     out += table[(n >> 12) & 63];
   } else if (remain === 2) {
     const n = (bytes[i] << 16) | (bytes[i + 1] << 8);
+
     out += table[(n >> 18) & 63];
     out += table[(n >> 12) & 63];
     out += table[(n >> 6) & 63];
@@ -389,22 +628,33 @@ function base64url(bytes) {
 
 function toBytes(data) {
   if (!data) return new Uint8Array(0);
-
   if (data instanceof Uint8Array) return data;
-  if (typeof ArrayBuffer !== "undefined" && data instanceof ArrayBuffer) return new Uint8Array(data);
+
+  if (typeof ArrayBuffer !== "undefined" && data instanceof ArrayBuffer) {
+    return new Uint8Array(data);
+  }
+
   if (typeof ArrayBuffer !== "undefined" && ArrayBuffer.isView && ArrayBuffer.isView(data)) {
     return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
   }
 
   if (typeof data === "string") {
     const out = new Uint8Array(data.length);
-    for (let i = 0; i < data.length; i++) out[i] = data.charCodeAt(i) & 0xff;
+
+    for (let i = 0; i < data.length; i++) {
+      out[i] = data.charCodeAt(i) & 0xff;
+    }
+
     return out;
   }
 
   if (typeof data.length === "number") {
     const out = new Uint8Array(data.length);
-    for (let i = 0; i < data.length; i++) out[i] = data[i] & 0xff;
+
+    for (let i = 0; i < data.length; i++) {
+      out[i] = data[i] & 0xff;
+    }
+
     return out;
   }
 
@@ -417,8 +667,12 @@ function writeName(bytes, name) {
 
   for (const label of labels) {
     if (label.length > 63) throw new Error("DNS label too long");
+
     writeU8(bytes, label.length);
-    for (let i = 0; i < label.length; i++) writeU8(bytes, label.charCodeAt(i) & 0xff);
+
+    for (let i = 0; i < label.length; i++) {
+      writeU8(bytes, label.charCodeAt(i) & 0xff);
+    }
   }
 
   writeU8(bytes, 0);
@@ -441,11 +695,17 @@ function readU16(bytes, offset) {
 }
 
 function readU32(bytes, offset) {
-  return (((bytes[offset] << 24) >>> 0) + ((bytes[offset + 1] << 16) >>> 0) + ((bytes[offset + 2] << 8) >>> 0) + bytes[offset + 3]) >>> 0;
+  return (
+    ((bytes[offset] << 24) >>> 0) +
+    ((bytes[offset + 1] << 16) >>> 0) +
+    ((bytes[offset + 2] << 8) >>> 0) +
+    bytes[offset + 3]
+  ) >>> 0;
 }
 
 function ipv6BytesToString(bytes) {
   const groups = [];
+
   for (let i = 0; i < 16; i += 2) {
     groups.push(((bytes[i] << 8) | bytes[i + 1]) >>> 0);
   }
@@ -464,6 +724,7 @@ function ipv6BytesToString(bytes) {
         bestStart = curStart;
         bestLen = curLen;
       }
+
       curStart = -1;
       curLen = 0;
     }
@@ -474,9 +735,11 @@ function ipv6BytesToString(bytes) {
   if (bestStart !== -1) {
     const left = groups.slice(0, bestStart).map((g) => g.toString(16)).join(":");
     const right = groups.slice(bestStart + bestLen).map((g) => g.toString(16)).join(":");
+
     if (left && right) return `${left}::${right}`;
     if (left) return `${left}::`;
     if (right) return `::${right}`;
+
     return "::";
   }
 
@@ -485,28 +748,36 @@ function ipv6BytesToString(bytes) {
 
 function ipv6ToBytes(ip) {
   ip = String(ip || "").split("%")[0].trim();
+
   if (!ip || ip.indexOf(":") === -1) return null;
 
   if (ip.indexOf(".") !== -1) {
     const lastColon = ip.lastIndexOf(":");
     const v4 = ip.slice(lastColon + 1);
+
     if (!isIPv4(v4)) return null;
+
     const nums = v4.split(".").map((n) => parseInt(n, 10));
     const h1 = ((nums[0] << 8) | nums[1]).toString(16);
     const h2 = ((nums[2] << 8) | nums[3]).toString(16);
+
     ip = ip.slice(0, lastColon) + ":" + h1 + ":" + h2;
   }
 
   const halves = ip.split("::");
+
   if (halves.length > 2) return null;
 
   const head = halves[0] ? halves[0].split(":").filter((x) => x.length) : [];
   const tail = halves.length === 2 && halves[1] ? halves[1].split(":").filter((x) => x.length) : [];
 
   let groups;
+
   if (halves.length === 2) {
     const zeros = 8 - head.length - tail.length;
+
     if (zeros < 0) return null;
+
     groups = head.concat(new Array(zeros).fill("0"), tail);
   } else {
     groups = head;
@@ -515,9 +786,12 @@ function ipv6ToBytes(ip) {
   if (groups.length !== 8) return null;
 
   const bytes = new Uint8Array(16);
+
   for (let i = 0; i < 8; i++) {
     if (!/^[0-9a-fA-F]{1,4}$/.test(groups[i])) return null;
+
     const n = parseInt(groups[i], 16);
+
     bytes[i * 2] = (n >> 8) & 0xff;
     bytes[i * 2 + 1] = n & 0xff;
   }
@@ -527,19 +801,24 @@ function ipv6ToBytes(ip) {
 
 function isIPv4(ip) {
   if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(String(ip))) return false;
+
   return String(ip).split(".").every((n) => {
     const v = parseInt(n, 10);
+
     return String(v) === String(Number(n)) && v >= 0 && v <= 255;
   });
 }
 
 function parseArgument(argument) {
   const result = {};
+
   if (!argument) return result;
 
   for (const part of String(argument).split("&")) {
     if (!part) continue;
+
     const index = part.indexOf("=");
+
     if (index === -1) {
       result[decode(part)] = "";
     } else {
@@ -553,7 +832,7 @@ function parseArgument(argument) {
 function decode(value) {
   try {
     return decodeURIComponent(String(value).replace(/\+/g, "%20"));
-  } catch {
+  } catch (e) {
     return String(value);
   }
 }
@@ -561,16 +840,24 @@ function decode(value) {
 function unique(arr) {
   const seen = {};
   const out = [];
+
   for (const item of arr) {
     if (!item || seen[item]) continue;
+
     seen[item] = true;
     out.push(item);
   }
+
   return out;
 }
 
 function toInt(value, fallback) {
   const n = parseInt(value, 10);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function toFloat(value, fallback) {
+  const n = parseFloat(value);
   return Number.isFinite(n) ? n : fallback;
 }
 
