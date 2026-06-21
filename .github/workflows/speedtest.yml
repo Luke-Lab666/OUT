@@ -1,0 +1,658 @@
+# .github/workflows/speedtest-pages.yml
+
+name: Add SpeedTest Page
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/speedtest-pages.yml"
+  workflow_run:
+    workflows:
+      - Deploy Pages
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+concurrency:
+  group: speedtest-pages
+  cancel-in-progress: true
+
+jobs:
+  add-speedtest:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Render speedtest page
+        run: |
+          set -euo pipefail
+
+          python3 <<'PY'
+          import hashlib
+          import os
+          import re
+          from pathlib import Path
+
+          root = Path(".")
+          speed_dir = root / "speedtest"
+          speed_dir.mkdir(parents=True, exist_ok=True)
+
+          def write_text(path: Path, text: str):
+              path.write_text(text.strip() + "\n", encoding="utf-8")
+
+          def make_bin(path: Path, size_mb: int):
+              target = size_mb * 1024 * 1024
+              if path.exists() and path.stat().st_size == target:
+                  return
+
+              seed = f"ProxyKit-SpeedTest-{size_mb}MB".encode()
+              written = 0
+              counter = 0
+
+              with path.open("wb") as f:
+                  while written < target:
+                      block = hashlib.sha256(seed + counter.to_bytes(8, "big")).digest()
+                      need = min(len(block), target - written)
+                      f.write(block[:need])
+                      written += need
+                      counter += 1
+
+          write_text(speed_dir / "ping.txt", "ProxyKit SpeedTest Ping OK")
+
+          make_bin(speed_dir / "test-8mb.bin", 8)
+          make_bin(speed_dir / "test-32mb.bin", 32)
+
+          page = r'''<!doctype html>
+          <html lang="zh-CN">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+            <meta name="color-scheme" content="light dark">
+            <title>ProxyKit · 网速测速</title>
+            <style>
+              :root {
+                --bg: #f6f7fb;
+                --card: rgba(255,255,255,.78);
+                --card-strong: rgba(255,255,255,.92);
+                --text: #101828;
+                --muted: #667085;
+                --line: rgba(16,24,40,.12);
+                --accent: #2563eb;
+                --accent-2: #00b8a9;
+                --danger: #ef4444;
+                --shadow: 0 24px 80px rgba(15,23,42,.12);
+              }
+
+              @media (prefers-color-scheme: dark) {
+                :root {
+                  --bg: #0b1020;
+                  --card: rgba(17,24,39,.72);
+                  --card-strong: rgba(17,24,39,.9);
+                  --text: #f8fafc;
+                  --muted: #9ca3af;
+                  --line: rgba(255,255,255,.12);
+                  --accent: #60a5fa;
+                  --accent-2: #2dd4bf;
+                  --danger: #fb7185;
+                  --shadow: 0 24px 80px rgba(0,0,0,.38);
+                }
+              }
+
+              * {
+                box-sizing: border-box;
+              }
+
+              html {
+                min-height: 100%;
+                background:
+                  radial-gradient(circle at 12% 8%, rgba(37,99,235,.24), transparent 32rem),
+                  radial-gradient(circle at 88% 18%, rgba(45,212,191,.22), transparent 30rem),
+                  radial-gradient(circle at 50% 100%, rgba(251,113,133,.12), transparent 28rem),
+                  var(--bg);
+              }
+
+              body {
+                margin: 0;
+                min-height: 100vh;
+                color: var(--text);
+                font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+              }
+
+              a {
+                color: inherit;
+                text-decoration: none;
+              }
+
+              .wrap {
+                width: min(1080px, calc(100% - 32px));
+                margin: 0 auto;
+                padding: 28px 0 42px;
+              }
+
+              .top {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 16px;
+                margin-bottom: 34px;
+              }
+
+              .brand {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-weight: 800;
+                letter-spacing: -.03em;
+              }
+
+              .logo {
+                width: 42px;
+                height: 42px;
+                display: grid;
+                place-items: center;
+                border-radius: 16px;
+                background: linear-gradient(135deg, var(--accent), var(--accent-2));
+                color: #fff;
+                box-shadow: 0 14px 40px rgba(37,99,235,.28);
+              }
+
+              .back {
+                padding: 10px 14px;
+                border: 1px solid var(--line);
+                border-radius: 999px;
+                background: var(--card);
+                color: var(--muted);
+                backdrop-filter: blur(18px);
+              }
+
+              .hero {
+                display: grid;
+                grid-template-columns: 1.08fr .92fr;
+                gap: 20px;
+                align-items: stretch;
+              }
+
+              .panel {
+                border: 1px solid var(--line);
+                border-radius: 30px;
+                background: var(--card);
+                box-shadow: var(--shadow);
+                backdrop-filter: blur(22px);
+                overflow: hidden;
+              }
+
+              .main {
+                padding: 30px;
+              }
+
+              h1 {
+                margin: 0;
+                font-size: clamp(34px, 7vw, 78px);
+                line-height: .92;
+                letter-spacing: -.07em;
+              }
+
+              .sub {
+                max-width: 680px;
+                margin: 18px 0 0;
+                color: var(--muted);
+                font-size: 15px;
+                line-height: 1.7;
+              }
+
+              .speed {
+                margin: 34px 0 24px;
+                display: flex;
+                align-items: baseline;
+                gap: 10px;
+              }
+
+              .num {
+                font-variant-numeric: tabular-nums;
+                font-size: clamp(58px, 12vw, 130px);
+                line-height: .82;
+                letter-spacing: -.08em;
+                font-weight: 900;
+              }
+
+              .unit {
+                color: var(--muted);
+                font-weight: 700;
+              }
+
+              .bar {
+                height: 12px;
+                border-radius: 999px;
+                background: rgba(128,128,128,.16);
+                overflow: hidden;
+              }
+
+              .fill {
+                width: 0%;
+                height: 100%;
+                border-radius: inherit;
+                background: linear-gradient(90deg, var(--accent), var(--accent-2));
+                transition: width .18s ease;
+              }
+
+              .status {
+                min-height: 24px;
+                margin: 14px 0 24px;
+                color: var(--muted);
+                font-size: 14px;
+              }
+
+              .actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+              }
+
+              button {
+                appearance: none;
+                border: 0;
+                border-radius: 999px;
+                padding: 14px 20px;
+                font: inherit;
+                font-weight: 800;
+                cursor: pointer;
+                color: #fff;
+                background: linear-gradient(135deg, var(--accent), var(--accent-2));
+                box-shadow: 0 14px 34px rgba(37,99,235,.24);
+              }
+
+              button.secondary {
+                color: var(--text);
+                background: var(--card-strong);
+                border: 1px solid var(--line);
+                box-shadow: none;
+              }
+
+              button:disabled {
+                cursor: not-allowed;
+                opacity: .55;
+              }
+
+              .grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 14px;
+                padding: 20px;
+              }
+
+              .metric {
+                padding: 20px;
+                border-radius: 24px;
+                background: var(--card-strong);
+                border: 1px solid var(--line);
+              }
+
+              .label {
+                color: var(--muted);
+                font-size: 13px;
+              }
+
+              .value {
+                margin-top: 10px;
+                font-size: 28px;
+                font-weight: 900;
+                letter-spacing: -.04em;
+                font-variant-numeric: tabular-nums;
+              }
+
+              .note {
+                padding: 0 20px 20px;
+                color: var(--muted);
+                font-size: 13px;
+                line-height: 1.65;
+              }
+
+              .tag {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 11px;
+                border-radius: 999px;
+                background: var(--card-strong);
+                border: 1px solid var(--line);
+                color: var(--muted);
+                font-size: 12px;
+                font-weight: 700;
+                margin: 0 6px 8px 0;
+              }
+
+              .dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: var(--accent-2);
+              }
+
+              @media (max-width: 820px) {
+                .hero {
+                  grid-template-columns: 1fr;
+                }
+
+                .main {
+                  padding: 24px;
+                }
+
+                .grid {
+                  grid-template-columns: 1fr 1fr;
+                }
+              }
+
+              @media (max-width: 520px) {
+                .top {
+                  align-items: flex-start;
+                  flex-direction: column;
+                }
+
+                .grid {
+                  grid-template-columns: 1fr;
+                }
+
+                .wrap {
+                  width: min(100% - 22px, 1080px);
+                  padding-top: 18px;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <main class="wrap">
+              <header class="top">
+                <a class="brand" href="../">
+                  <span class="logo">PK</span>
+                  <span>ProxyKit SpeedTest</span>
+                </a>
+                <a class="back" href="../">返回首页</a>
+              </header>
+
+              <section class="hero">
+                <div class="panel main">
+                  <div>
+                    <span class="tag"><span class="dot"></span>当前链路测速</span>
+                    <span class="tag">GitHub Pages CDN</span>
+                  </div>
+
+                  <h1>网速测速</h1>
+                  <p class="sub">
+                    这个页面测试的是你当前网络到 ProxyKit GitHub Pages 的访问质量。
+                    如果你开着 Surge / 代理，结果就是当前策略链路到 GitHub Pages CDN 的速度，不是运营商实验室测速。
+                  </p>
+
+                  <div class="speed">
+                    <div class="num" id="speed">0</div>
+                    <div class="unit">Mbps</div>
+                  </div>
+
+                  <div class="bar">
+                    <div class="fill" id="fill"></div>
+                  </div>
+
+                  <p class="status" id="status">准备就绪，点一下开始。</p>
+
+                  <div class="actions">
+                    <button id="start">开始测速</button>
+                    <button class="secondary" id="copy" disabled>复制结果</button>
+                  </div>
+                </div>
+
+                <aside class="panel">
+                  <div class="grid">
+                    <div class="metric">
+                      <div class="label">下载速度</div>
+                      <div class="value" id="download">--</div>
+                    </div>
+                    <div class="metric">
+                      <div class="label">延迟</div>
+                      <div class="value" id="latency">--</div>
+                    </div>
+                    <div class="metric">
+                      <div class="label">抖动</div>
+                      <div class="value" id="jitter">--</div>
+                    </div>
+                    <div class="metric">
+                      <div class="label">测试流量</div>
+                      <div class="value" id="traffic">--</div>
+                    </div>
+                  </div>
+
+                  <div class="note">
+                    说明：纯 GitHub Pages 没有后端，所以这里不做上传测速。
+                    下载测速会重复拉取 32MB 测试文件，最多约 256MB 流量。
+                    高速宽带下结果会偏保守，但用来判断 Surge 策略、代理节点、DNS 路由是否抽风，很够用。
+                  </div>
+                </aside>
+              </section>
+            </main>
+
+            <script>
+              const $ = (id) => document.getElementById(id);
+
+              const els = {
+                start: $("start"),
+                copy: $("copy"),
+                speed: $("speed"),
+                fill: $("fill"),
+                status: $("status"),
+                download: $("download"),
+                latency: $("latency"),
+                jitter: $("jitter"),
+                traffic: $("traffic"),
+              };
+
+              let lastResult = null;
+
+              function fmtMbps(v) {
+                if (!Number.isFinite(v)) return "--";
+                if (v >= 100) return Math.round(v).toString();
+                if (v >= 10) return v.toFixed(1);
+                return v.toFixed(2);
+              }
+
+              function fmtMs(v) {
+                if (!Number.isFinite(v)) return "--";
+                return `${Math.round(v)} ms`;
+              }
+
+              function setSpeed(mbps) {
+                const shown = fmtMbps(mbps);
+                els.speed.textContent = shown;
+                els.download.textContent = shown === "--" ? "--" : `${shown} Mbps`;
+
+                const pct = Math.max(4, Math.min(100, (mbps / 500) * 100));
+                els.fill.style.width = `${pct}%`;
+              }
+
+              async function pingOnce(i) {
+                const start = performance.now();
+                const res = await fetch(`./ping.txt?ts=${Date.now()}-${i}`, {
+                  cache: "no-store",
+                  credentials: "same-origin",
+                });
+                await res.text();
+                return performance.now() - start;
+              }
+
+              async function testLatency() {
+                const samples = [];
+
+                for (let i = 0; i < 8; i++) {
+                  els.status.textContent = `测试延迟中 ${i + 1}/8...`;
+                  samples.push(await pingOnce(i));
+                  await new Promise((r) => setTimeout(r, 120));
+                }
+
+                const avg = samples.reduce((a, b) => a + b, 0) / samples.length;
+                const diffs = samples.slice(1).map((v, i) => Math.abs(v - samples[i]));
+                const jitter = diffs.length
+                  ? diffs.reduce((a, b) => a + b, 0) / diffs.length
+                  : 0;
+
+                els.latency.textContent = fmtMs(avg);
+                els.jitter.textContent = fmtMs(jitter);
+
+                return { avg, jitter };
+              }
+
+              async function fetchAndMeasure(url, update) {
+                const started = performance.now();
+                const res = await fetch(`${url}?ts=${Date.now()}-${Math.random().toString(16).slice(2)}`, {
+                  cache: "no-store",
+                  credentials: "same-origin",
+                });
+
+                if (!res.ok || !res.body) {
+                  throw new Error(`测速文件请求失败：HTTP ${res.status}`);
+                }
+
+                const reader = res.body.getReader();
+                let bytes = 0;
+
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+
+                  bytes += value.byteLength;
+                  const elapsed = Math.max((performance.now() - started) / 1000, 0.001);
+                  const mbps = (bytes * 8) / elapsed / 1000 / 1000;
+                  update(mbps, bytes, elapsed);
+                }
+
+                const elapsed = Math.max((performance.now() - started) / 1000, 0.001);
+                return { bytes, seconds: elapsed };
+              }
+
+              async function testDownload() {
+                const targetSeconds = 6;
+                const maxBytes = 256 * 1024 * 1024;
+                let totalBytes = 0;
+                const started = performance.now();
+
+                while ((performance.now() - started) / 1000 < targetSeconds && totalBytes < maxBytes) {
+                  const size = totalBytes < 8 * 1024 * 1024 ? "./test-8mb.bin" : "./test-32mb.bin";
+
+                  const result = await fetchAndMeasure(size, (instantMbps, currentBytes) => {
+                    const elapsedTotal = Math.max((performance.now() - started) / 1000, 0.001);
+                    const mbps = ((totalBytes + currentBytes) * 8) / elapsedTotal / 1000 / 1000;
+                    setSpeed(mbps);
+                    els.traffic.textContent = `${((totalBytes + currentBytes) / 1024 / 1024).toFixed(1)} MB`;
+                    els.status.textContent = `下载测速中... 当前 ${fmtMbps(instantMbps)} Mbps`;
+                  });
+
+                  totalBytes += result.bytes;
+                }
+
+                const totalSeconds = Math.max((performance.now() - started) / 1000, 0.001);
+                const avgMbps = (totalBytes * 8) / totalSeconds / 1000 / 1000;
+
+                setSpeed(avgMbps);
+                els.traffic.textContent = `${(totalBytes / 1024 / 1024).toFixed(1)} MB`;
+
+                return { mbps: avgMbps, bytes: totalBytes, seconds: totalSeconds };
+              }
+
+              async function run() {
+                els.start.disabled = true;
+                els.copy.disabled = true;
+                els.status.textContent = "开始测速...";
+                setSpeed(0);
+                els.latency.textContent = "--";
+                els.jitter.textContent = "--";
+                els.traffic.textContent = "--";
+
+                try {
+                  const latency = await testLatency();
+                  const download = await testDownload();
+
+                  lastResult = {
+                    downloadMbps: download.mbps,
+                    latencyMs: latency.avg,
+                    jitterMs: latency.jitter,
+                    trafficMB: download.bytes / 1024 / 1024,
+                    time: new Date().toLocaleString(),
+                  };
+
+                  els.status.textContent = "测速完成。";
+                  els.copy.disabled = false;
+                } catch (err) {
+                  els.status.textContent = err && err.message ? err.message : "测速失败。";
+                } finally {
+                  els.start.disabled = false;
+                }
+              }
+
+              async function copyResult() {
+                if (!lastResult) return;
+
+                const text = [
+                  "ProxyKit 网速测速结果",
+                  `下载速度：${fmtMbps(lastResult.downloadMbps)} Mbps`,
+                  `延迟：${fmtMs(lastResult.latencyMs)}`,
+                  `抖动：${fmtMs(lastResult.jitterMs)}`,
+                  `测试流量：${lastResult.trafficMB.toFixed(1)} MB`,
+                  `时间：${lastResult.time}`,
+                ].join("\n");
+
+                await navigator.clipboard.writeText(text);
+                els.status.textContent = "结果已复制。";
+              }
+
+              els.start.addEventListener("click", run);
+              els.copy.addEventListener("click", copyResult);
+            </script>
+          </body>
+          </html>'''
+
+          write_text(speed_dir / "index.html", page)
+
+          index_path = root / "index.html"
+
+          if index_path.exists():
+              index = index_path.read_text(encoding="utf-8")
+
+              if "speedtest/" not in index:
+                  link = '<a class="repo-link" href="./speedtest/">网速测速</a>'
+
+                  if "</nav>" in index:
+                      index = index.replace("</nav>", f"{link}</nav>", 1)
+                  elif "</header>" in index:
+                      index = index.replace("</header>", f'<nav>{link}</nav></header>', 1)
+                  elif "</body>" in index:
+                      index = index.replace("</body>", f'<p style="text-align:center"><a href="./speedtest/">网速测速</a></p></body>', 1)
+                  else:
+                      index += '\n<p><a href="./speedtest/">网速测速</a></p>\n'
+
+                  index_path.write_text(index, encoding="utf-8")
+
+          PY
+
+      - name: Commit speedtest page
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No speedtest changes."
+            exit 0
+          fi
+
+          git commit -m "deploy: add speedtest page"
+          git push origin gh-pages
