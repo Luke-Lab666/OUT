@@ -1,0 +1,1693 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f3ecdf" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#090705" media="(prefers-color-scheme: dark)">
+  <title>ProxyKit · 规则 / 脚本 / 模块</title>
+
+  <style>
+    :root {
+      color-scheme: light dark;
+
+      --page: #f3ecdf;
+      --page-top: #fff8ec;
+      --page-bottom: #eee4d4;
+
+      --text: #12100b;
+      --muted: #766f62;
+      --muted-soft: #9b927f;
+
+      --hero: #fff9ef;
+      --card: #fffaf0;
+      --card-strong: #fffdf7;
+      --field: #fff8ed;
+
+      --control: #ebe4d8;
+      --control-hover: #e4dbc9;
+      --control-border: #d6cdbc;
+      --control-text: #756545;
+
+      --active-start: #eed690;
+      --active-mid: #ca9438;
+      --active-end: #86591f;
+      --active-text: #120d05;
+
+      --primary: #181207;
+      --primary-hover: #241909;
+      --primary-text: #fff0bd;
+
+      --line: rgba(37, 30, 17, .10);
+      --line-strong: rgba(37, 30, 17, .16);
+
+      --shadow-page: 0 26px 70px rgba(70, 54, 21, .08);
+      --shadow-card: 0 16px 42px rgba(70, 54, 21, .075);
+      --shadow-card-hover: 0 24px 58px rgba(70, 54, 21, .12);
+      --shadow-control: inset 0 1px 0 rgba(255, 255, 255, .34);
+
+      --radius-hero: 34px;
+      --radius-card: 28px;
+      --radius-control: 999px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+
+        --page: #090705;
+        --page-top: #21180c;
+        --page-bottom: #050403;
+
+        --text: #f7efde;
+        --muted: #a99f8d;
+        --muted-soft: #817665;
+
+        --hero: #151109;
+        --card: #151109;
+        --card-strong: #1b150c;
+        --field: #100d08;
+
+        --control: #241b0f;
+        --control-hover: #2d2213;
+        --control-border: #4b3a20;
+        --control-text: #d7bd75;
+
+        --active-start: #dec47c;
+        --active-mid: #b98735;
+        --active-end: #76501e;
+        --active-text: #100b04;
+
+        --primary: linear-gradient(135deg, #dec47c 0%, #b98735 52%, #76501e 100%);
+        --primary-hover: linear-gradient(135deg, #e8ce87 0%, #c8943e 52%, #855a22 100%);
+        --primary-text: #100b04;
+
+        --line: rgba(232, 201, 122, .12);
+        --line-strong: rgba(232, 201, 122, .22);
+
+        --shadow-page: 0 30px 90px rgba(0, 0, 0, .30);
+        --shadow-card: 0 18px 48px rgba(0, 0, 0, .32);
+        --shadow-card-hover: 0 26px 68px rgba(0, 0, 0, .44);
+        --shadow-control: inset 0 1px 0 rgba(255, 255, 255, .05);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--page);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family:
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "SF Pro Text",
+        "PingFang SC",
+        "Microsoft YaHei",
+        sans-serif;
+      background:
+        radial-gradient(circle at 20% -10%, rgba(218, 173, 82, .24), transparent 32rem),
+        radial-gradient(circle at 80% 0%, rgba(128, 84, 24, .12), transparent 28rem),
+        linear-gradient(180deg, var(--page-top) 0%, var(--page) 46%, var(--page-bottom) 100%);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background:
+          radial-gradient(circle at 20% -10%, rgba(205, 157, 64, .16), transparent 32rem),
+          radial-gradient(circle at 80% 0%, rgba(118, 80, 30, .16), transparent 28rem),
+          linear-gradient(180deg, var(--page-top) 0%, var(--page) 46%, var(--page-bottom) 100%);
+      }
+    }
+
+    a,
+    button,
+    input {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .wrap {
+      width: min(100%, 1080px);
+      margin: 0 auto;
+      padding: 34px 22px max(92px, calc(58px + env(safe-area-inset-bottom)));
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 16px 9px 9px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-control);
+      background: var(--card);
+      color: var(--text);
+      text-decoration: none;
+      box-shadow:
+        var(--shadow-card),
+        var(--shadow-control);
+    }
+
+    .brand:visited {
+      color: var(--text);
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: var(--primary);
+      color: var(--primary-text);
+      font-size: 14px;
+      font-weight: 950;
+      letter-spacing: -.055em;
+      box-shadow:
+        0 12px 26px rgba(32, 24, 12, .18),
+        var(--shadow-control);
+    }
+
+    .brand b {
+      font-size: 22px;
+      line-height: 1;
+      font-weight: 950;
+      letter-spacing: -.055em;
+    }
+
+    .repo-link {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 760;
+      padding: 10px 14px;
+      border-radius: var(--radius-control);
+    }
+
+    .repo-link:hover {
+      color: var(--text);
+      background: var(--control);
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-hero);
+      padding: clamp(38px, 7vw, 72px) 24px;
+      margin-bottom: 38px;
+      text-align: center;
+      background:
+        radial-gradient(circle at 50% 30%, rgba(215, 178, 95, .16), transparent 44%),
+        var(--hero);
+      box-shadow:
+        var(--shadow-page),
+        var(--shadow-control);
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, .28), transparent 44%, rgba(184, 135, 47, .05));
+      opacity: .9;
+    }
+
+    .hero > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(50px, 8vw, 92px);
+      line-height: .92;
+      font-weight: 950;
+      letter-spacing: -.085em;
+    }
+
+    .hero-badges {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .hero-badge,
+    .tab,
+    .type-pill,
+    .file-icon,
+    .action {
+      border: 1px solid var(--control-border);
+      background: var(--control);
+      color: var(--control-text);
+      box-shadow: var(--shadow-control);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 7px 13px;
+      border-radius: var(--radius-control);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: clamp(28px, 4.8vw, 46px);
+      letter-spacing: -.06em;
+      line-height: 1;
+    }
+
+    .summary {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 650;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr minmax(220px, 330px);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tab {
+      cursor: pointer;
+      min-height: 42px;
+      padding: 9px 16px;
+      border-radius: var(--radius-control);
+      font-size: 14px;
+      font-weight: 850;
+    }
+
+    .tab:hover {
+      background: var(--control-hover);
+    }
+
+    .tab.active {
+      color: var(--active-text);
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--active-start) 0%, var(--active-mid) 52%, var(--active-end) 100%);
+    }
+
+    .search-wrap {
+      position: relative;
+    }
+
+    .search {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 16px 9px 42px;
+      color: var(--text);
+      border: 1px solid var(--control-border);
+      border-radius: var(--radius-control);
+      outline: none;
+      background: var(--field);
+      box-shadow: var(--shadow-control);
+    }
+
+    .search::placeholder {
+      color: var(--muted-soft);
+    }
+
+    .search-wrap::before {
+      content: "⌕";
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted-soft);
+      font-weight: 900;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      position: relative;
+      overflow: hidden;
+      min-height: 244px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-card);
+      background: var(--card);
+      box-shadow:
+        var(--shadow-card),
+        var(--shadow-control);
+      transition:
+        transform .18s ease,
+        background .18s ease,
+        border-color .18s ease,
+        box-shadow .18s ease;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at top right, rgba(224, 179, 92, .12), transparent 46%),
+        linear-gradient(135deg, rgba(255, 255, 255, .14), transparent 44%);
+      opacity: .9;
+    }
+
+    .card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      background: var(--card-strong);
+      border-color: var(--line-strong);
+      box-shadow:
+        var(--shadow-card-hover),
+        var(--shadow-control);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .file-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      font-weight: 950;
+      letter-spacing: -.05em;
+    }
+
+    .type-pill {
+      min-height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 11px;
+      border-radius: var(--radius-control);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.24;
+      letter-spacing: -.035em;
+      word-break: break-word;
+    }
+
+    .path {
+      min-height: 44px;
+      margin: 14px 0 12px;
+      color: var(--muted);
+      font-family:
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        Monaco,
+        Consolas,
+        monospace;
+      font-size: 12px;
+      line-height: 1.55;
+      word-break: break-all;
+    }
+
+    .updated {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-wrap: wrap;
+      margin: 0 0 16px;
+      color: var(--muted-soft);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .updated span {
+      display: inline-flex;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .action {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 12px;
+      border-radius: var(--radius-control);
+      color: var(--control-text);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .action:hover {
+      background: var(--control-hover);
+    }
+
+    .primary-action {
+      color: var(--primary-text);
+      border-color: transparent;
+      background: var(--primary);
+    }
+
+    .primary-action:hover {
+      background: var(--primary-hover);
+    }
+
+    .copy-btn {
+      appearance: none;
+    }
+
+    .empty {
+      display: none;
+      padding: 36px 22px;
+      margin-top: 16px;
+      border: 1px dashed var(--line-strong);
+      border-radius: var(--radius-card);
+      color: var(--muted);
+      text-align: center;
+      background: rgba(255, 255, 255, .08);
+      font-weight: 760;
+    }
+
+    .footer {
+      margin-top: 34px;
+      color: var(--muted-soft);
+      text-align: center;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: max(24px, calc(18px + env(safe-area-inset-bottom)));
+      z-index: 99;
+      transform: translateX(-50%) translateY(18px);
+      opacity: 0;
+      pointer-events: none;
+      padding: 11px 15px;
+      border-radius: var(--radius-control);
+      color: var(--primary-text);
+      background: var(--primary);
+      box-shadow:
+        var(--shadow-card-hover),
+        var(--shadow-control);
+      transition:
+        opacity .18s ease,
+        transform .18s ease;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 920px) {
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .wrap {
+        padding-inline: 14px;
+        padding-top: 18px;
+      }
+
+      .topbar {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .brand,
+      .repo-link {
+        justify-content: center;
+      }
+
+      .hero {
+        border-radius: 28px;
+        padding: 38px 18px;
+        margin-bottom: 28px;
+      }
+
+      .section-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        min-height: 0;
+        border-radius: 24px;
+        padding: 18px;
+      }
+
+      .tabs {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .tab {
+        padding-inline: 8px;
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="wrap">
+    <nav class="topbar">
+      <a class="brand" href="https://github.com/Luke-Lab666/ProxyKit">
+        <span class="logo">PK</span>
+        <b>ProxyKit</b>
+      </a>
+    </nav>
+
+    <section class="hero">
+      <h1>ProxyKit</h1>
+
+      <div class="hero-badges">
+        <span class="hero-badge">适配：Surge</span>
+        <span class="hero-badge">更新：部分自动</span>
+      </div>
+    </section>
+
+    <section class="section-head">
+      <div>
+        <h2>文件列表</h2>
+        <p class="summary">共 <strong id="count">26</strong> 项</p>
+      </div>
+    </section>
+
+    <section class="controls">
+      <div class="tabs">
+        <button class="tab active" type="button" data-filter="all">全部</button>
+        <button class="tab" type="button" data-filter="Rule">规则</button>
+        <button class="tab" type="button" data-filter="Scripts">脚本</button>
+        <button class="tab" type="button" data-filter="SurgeModule">模块</button>
+      </div>
+
+      <label class="search-wrap">
+        <input class="search" id="search" type="search" placeholder="搜索文件名 / 路径">
+      </label>
+    </section>
+
+    <section class="grid" id="grid">
+      
+    <article class="card" data-folder="Rule" data-search="agi rule/agi 规则">
+      <div class="card-head">
+        <span class="file-icon">R</span>
+        <span class="type-pill">规则</span>
+      </div>
+
+      <h3>AGI</h3>
+      <p class="path">Rule/AGI</p>
+
+      <p class="updated">
+        <span>更新：2026/07/02 21:39</span>
+        <span>3.9 KB</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/AGI">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/AGI">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/AGI">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="Rule" data-search="apns rule/apns 规则">
+      <div class="card-head">
+        <span class="file-icon">R</span>
+        <span class="type-pill">规则</span>
+      </div>
+
+      <h3>APNs</h3>
+      <p class="path">Rule/APNs</p>
+
+      <p class="updated">
+        <span>更新：2026/07/02 22:19</span>
+        <span>593 B</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/APNs">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/APNs">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/APNs">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="Rule" data-search="applecn rule/applecn 规则">
+      <div class="card-head">
+        <span class="file-icon">R</span>
+        <span class="type-pill">规则</span>
+      </div>
+
+      <h3>AppleCN</h3>
+      <p class="path">Rule/AppleCN</p>
+
+      <p class="updated">
+        <span>更新：2026/07/02 22:19</span>
+        <span>453 B</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/AppleCN">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/AppleCN">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/AppleCN">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="Rule" data-search="applefull rule/applefull 规则">
+      <div class="card-head">
+        <span class="file-icon">R</span>
+        <span class="type-pill">规则</span>
+      </div>
+
+      <h3>AppleFull</h3>
+      <p class="path">Rule/AppleFull</p>
+
+      <p class="updated">
+        <span>更新：2026/07/02 22:19</span>
+        <span>9.9 KB</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/AppleFull">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/AppleFull">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/AppleFull">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="Rule" data-search="cn rule/cn 规则">
+      <div class="card-head">
+        <span class="file-icon">R</span>
+        <span class="type-pill">规则</span>
+      </div>
+
+      <h3>CN</h3>
+      <p class="path">Rule/CN</p>
+
+      <p class="updated">
+        <span>更新：2026/07/01 23:39</span>
+        <span>473.5 KB</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/CN">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/CN">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/CN">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="Rule" data-search="geoip rule/geoip 规则">
+      <div class="card-head">
+        <span class="file-icon">R</span>
+        <span class="type-pill">规则</span>
+      </div>
+
+      <h3>GeoIP</h3>
+      <p class="path">Rule/GeoIP</p>
+
+      <p class="updated">
+        <span>更新：2026/06/14 15:55</span>
+        <span>9 B</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/GeoIP">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/GeoIP">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/GeoIP">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="Rule" data-search="geoip-cn.mmdb rule/geoip-cn.mmdb 规则">
+      <div class="card-head">
+        <span class="file-icon">IP</span>
+        <span class="type-pill">规则</span>
+      </div>
+
+      <h3>GeoIP-CN.mmdb</h3>
+      <p class="path">Rule/GeoIP-CN.mmdb</p>
+
+      <p class="updated">
+        <span>更新：2026/07/01 23:39</span>
+        <span>357.3 KB</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/GeoIP-CN.mmdb">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/GeoIP-CN.mmdb">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/GeoIP-CN.mmdb">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="Rule" data-search="lan rule/lan 规则">
+      <div class="card-head">
+        <span class="file-icon">R</span>
+        <span class="type-pill">规则</span>
+      </div>
+
+      <h3>LAN</h3>
+      <p class="path">Rule/LAN</p>
+
+      <p class="updated">
+        <span>更新：2026/06/20 10:19</span>
+        <span>1.5 KB</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/LAN">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/LAN">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/LAN">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="Rule" data-search="net-info-d rule/net-info-d 规则">
+      <div class="card-head">
+        <span class="file-icon">R</span>
+        <span class="type-pill">规则</span>
+      </div>
+
+      <h3>Net-Info-D</h3>
+      <p class="path">Rule/Net-Info-D</p>
+
+      <p class="updated">
+        <span>更新：2026/06/14 15:56</span>
+        <span>530 B</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Net-Info-D">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/Net-Info-D">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Net-Info-D">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="Rule" data-search="net-info-g rule/net-info-g 规则">
+      <div class="card-head">
+        <span class="file-icon">R</span>
+        <span class="type-pill">规则</span>
+      </div>
+
+      <h3>Net-Info-G</h3>
+      <p class="path">Rule/Net-Info-G</p>
+
+      <p class="updated">
+        <span>更新：2026/06/14 15:56</span>
+        <span>93 B</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Net-Info-G">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/Net-Info-G">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Net-Info-G">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="Rule" data-search="notgeoip rule/notgeoip 规则">
+      <div class="card-head">
+        <span class="file-icon">R</span>
+        <span class="type-pill">规则</span>
+      </div>
+
+      <h3>NotGeoIP</h3>
+      <p class="path">Rule/NotGeoIP</p>
+
+      <p class="updated">
+        <span>更新：2026/06/14 15:56</span>
+        <span>17 B</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/NotGeoIP">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/NotGeoIP">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/NotGeoIP">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="Rule" data-search="outlook rule/outlook 规则">
+      <div class="card-head">
+        <span class="file-icon">R</span>
+        <span class="type-pill">规则</span>
+      </div>
+
+      <h3>Outlook</h3>
+      <p class="path">Rule/Outlook</p>
+
+      <p class="updated">
+        <span>更新：2026/06/20 20:28</span>
+        <span>1.6 KB</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Outlook">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/Outlook">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Outlook">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="Rule" data-search="privaterule rule/privaterule 规则">
+      <div class="card-head">
+        <span class="file-icon">R</span>
+        <span class="type-pill">规则</span>
+      </div>
+
+      <h3>PrivateRule</h3>
+      <p class="path">Rule/PrivateRule</p>
+
+      <p class="updated">
+        <span>更新：2026/06/28 00:02</span>
+        <span>39 B</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/PrivateRule">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/PrivateRule">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/PrivateRule">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="Rule" data-search="reject rule/reject 规则">
+      <div class="card-head">
+        <span class="file-icon">R</span>
+        <span class="type-pill">规则</span>
+      </div>
+
+      <h3>REJECT</h3>
+      <p class="path">Rule/REJECT</p>
+
+      <p class="updated">
+        <span>更新：2026/06/21 12:59</span>
+        <span>126 B</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/REJECT">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/REJECT">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/REJECT">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="Rule" data-search="stun rule/stun 规则">
+      <div class="card-head">
+        <span class="file-icon">R</span>
+        <span class="type-pill">规则</span>
+      </div>
+
+      <h3>STUN</h3>
+      <p class="path">Rule/STUN</p>
+
+      <p class="updated">
+        <span>更新：2026/06/27 23:58</span>
+        <span>13 B</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/STUN">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/STUN">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/STUN">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="Rule" data-search="telegram rule/telegram 规则">
+      <div class="card-head">
+        <span class="file-icon">R</span>
+        <span class="type-pill">规则</span>
+      </div>
+
+      <h3>Telegram</h3>
+      <p class="path">Rule/Telegram</p>
+
+      <p class="updated">
+        <span>更新：2026/06/14 17:30</span>
+        <span>1.1 KB</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Telegram">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/Telegram">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Telegram">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="Scripts" data-search="dns-lite.js scripts/dns-lite.js 脚本">
+      <div class="card-head">
+        <span class="file-icon">JS</span>
+        <span class="type-pill">脚本</span>
+      </div>
+
+      <h3>dns-lite.js</h3>
+      <p class="path">Scripts/dns-lite.js</p>
+
+      <p class="updated">
+        <span>更新：2026/06/21 10:07</span>
+        <span>19.8 KB</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Scripts/dns-lite.js">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/Scripts/dns-lite.js">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Scripts/dns-lite.js">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="Scripts" data-search="kill-connections-lite.js scripts/kill-connections-lite.js 脚本">
+      <div class="card-head">
+        <span class="file-icon">JS</span>
+        <span class="type-pill">脚本</span>
+      </div>
+
+      <h3>kill-connections-lite.js</h3>
+      <p class="path">Scripts/kill-connections-lite.js</p>
+
+      <p class="updated">
+        <span>更新：2026/06/19 08:58</span>
+        <span>6.4 KB</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Scripts/kill-connections-lite.js">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/Scripts/kill-connections-lite.js">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Scripts/kill-connections-lite.js">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="SurgeModule" data-search="antifqad.sgmodule surgemodule/antifqad.sgmodule 模块">
+      <div class="card-head">
+        <span class="file-icon">M</span>
+        <span class="type-pill">模块</span>
+      </div>
+
+      <h3>AntiFQAD.sgmodule</h3>
+      <p class="path">SurgeModule/AntiFQAD.sgmodule</p>
+
+      <p class="updated">
+        <span>更新：2026/06/21 11:15</span>
+        <span>5.5 KB</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/AntiFQAD.sgmodule">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/SurgeModule/AntiFQAD.sgmodule">仓库页</a>
+        <a class="action primary-action" href="surge:///install-module?url=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/AntiFQAD.sgmodule">安装</a>
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/AntiFQAD.sgmodule">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="SurgeModule" data-search="blockhttpdns.sgmodule surgemodule/blockhttpdns.sgmodule 模块">
+      <div class="card-head">
+        <span class="file-icon">M</span>
+        <span class="type-pill">模块</span>
+      </div>
+
+      <h3>BlockHTTPDNS.sgmodule</h3>
+      <p class="path">SurgeModule/BlockHTTPDNS.sgmodule</p>
+
+      <p class="updated">
+        <span>更新：2026/06/29 18:20</span>
+        <span>12.6 KB</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/BlockHTTPDNS.sgmodule">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/SurgeModule/BlockHTTPDNS.sgmodule">仓库页</a>
+        <a class="action primary-action" href="surge:///install-module?url=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/BlockHTTPDNS.sgmodule">安装</a>
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/BlockHTTPDNS.sgmodule">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="SurgeModule" data-search="dns-lite.sgmodule surgemodule/dns-lite.sgmodule 模块">
+      <div class="card-head">
+        <span class="file-icon">M</span>
+        <span class="type-pill">模块</span>
+      </div>
+
+      <h3>DNS-Lite.sgmodule</h3>
+      <p class="path">SurgeModule/DNS-Lite.sgmodule</p>
+
+      <p class="updated">
+        <span>更新：2026/06/21 10:07</span>
+        <span>2.3 KB</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/DNS-Lite.sgmodule">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/SurgeModule/DNS-Lite.sgmodule">仓库页</a>
+        <a class="action primary-action" href="surge:///install-module?url=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/DNS-Lite.sgmodule">安装</a>
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/DNS-Lite.sgmodule">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="SurgeModule" data-search="dns-stability.sgmodule surgemodule/dns-stability.sgmodule 模块">
+      <div class="card-head">
+        <span class="file-icon">M</span>
+        <span class="type-pill">模块</span>
+      </div>
+
+      <h3>DNS-Stability.sgmodule</h3>
+      <p class="path">SurgeModule/DNS-Stability.sgmodule</p>
+
+      <p class="updated">
+        <span>更新：2026/06/21 03:24</span>
+        <span>1.9 KB</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/DNS-Stability.sgmodule">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/SurgeModule/DNS-Stability.sgmodule">仓库页</a>
+        <a class="action primary-action" href="surge:///install-module?url=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/DNS-Stability.sgmodule">安装</a>
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/DNS-Stability.sgmodule">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="SurgeModule" data-search="google跳转.sgmodule surgemodule/google跳转.sgmodule 模块">
+      <div class="card-head">
+        <span class="file-icon">M</span>
+        <span class="type-pill">模块</span>
+      </div>
+
+      <h3>Google跳转.sgmodule</h3>
+      <p class="path">SurgeModule/Google跳转.sgmodule</p>
+
+      <p class="updated">
+        <span>更新：2026/06/25 23:30</span>
+        <span>956 B</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/Google%E8%B7%B3%E8%BD%AC.sgmodule">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/SurgeModule/Google%E8%B7%B3%E8%BD%AC.sgmodule">仓库页</a>
+        <a class="action primary-action" href="surge:///install-module?url=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/Google%E8%B7%B3%E8%BD%AC.sgmodule">安装</a>
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/Google%E8%B7%B3%E8%BD%AC.sgmodule">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="SurgeModule" data-search="kill-connections-lite.sgmodule surgemodule/kill-connections-lite.sgmodule 模块">
+      <div class="card-head">
+        <span class="file-icon">M</span>
+        <span class="type-pill">模块</span>
+      </div>
+
+      <h3>Kill-Connections-Lite.sgmodule</h3>
+      <p class="path">SurgeModule/Kill-Connections-Lite.sgmodule</p>
+
+      <p class="updated">
+        <span>更新：2026/06/21 03:26</span>
+        <span>2.0 KB</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/Kill-Connections-Lite.sgmodule">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/SurgeModule/Kill-Connections-Lite.sgmodule">仓库页</a>
+        <a class="action primary-action" href="surge:///install-module?url=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/Kill-Connections-Lite.sgmodule">安装</a>
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/Kill-Connections-Lite.sgmodule">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="SurgeModule" data-search="luke egern boost surgemodule/luke egern boost 模块">
+      <div class="card-head">
+        <span class="file-icon">M</span>
+        <span class="type-pill">模块</span>
+      </div>
+
+      <h3>Luke Egern Boost</h3>
+      <p class="path">SurgeModule/Luke Egern Boost</p>
+
+      <p class="updated">
+        <span>更新：2026/06/20 13:01</span>
+        <span>3.7 KB</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/Luke%20Egern%20Boost">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/SurgeModule/Luke%20Egern%20Boost">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/Luke%20Egern%20Boost">复制</button>
+      </div>
+    </article>
+
+    <article class="card" data-folder="SurgeModule" data-search="luke.conf surgemodule/luke.conf 模块">
+      <div class="card-head">
+        <span class="file-icon">M</span>
+        <span class="type-pill">模块</span>
+      </div>
+
+      <h3>Luke.conf</h3>
+      <p class="path">SurgeModule/Luke.conf</p>
+
+      <p class="updated">
+        <span>更新：2026/06/21 14:22</span>
+        <span>9.8 KB</span>
+      </p>
+
+      <div class="actions">
+        <a class="action" href="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/Luke.conf">RAW链接</a>
+        <a class="action" href="https://github.com/Luke-Lab666/ProxyKit/blob/main/SurgeModule/Luke.conf">仓库页</a>
+        
+        <button class="action copy-btn" type="button" data-copy="https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/Luke.conf">复制</button>
+      </div>
+    </article>
+    </section>
+
+    <div class="empty" id="empty">没找到，换个关键词试试。</div>
+
+    <footer class="footer">
+      ProxyKit · 代理配置集合 · 适用于 GitHub Pages · 自动索引页面
+    </footer>
+  </main>
+
+  <div class="toast" id="toast">已复制</div>
+
+  <script id="files-data" type="application/json">[
+  {
+    &quot;title&quot;: &quot;规则&quot;,
+    &quot;folder&quot;: &quot;Rule&quot;,
+    &quot;files&quot;: [
+      {
+        &quot;name&quot;: &quot;AGI&quot;,
+        &quot;path&quot;: &quot;Rule/AGI&quot;,
+        &quot;folder&quot;: &quot;Rule&quot;,
+        &quot;title&quot;: &quot;规则&quot;,
+        &quot;icon&quot;: &quot;R&quot;,
+        &quot;updatedAt&quot;: &quot;2026-07-02T21:39:07Z&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/07/02 21:39&quot;,
+        &quot;sizeText&quot;: &quot;3.9 KB&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/AGI&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/AGI&quot;,
+        &quot;install&quot;: &quot;&quot;
+      },
+      {
+        &quot;name&quot;: &quot;APNs&quot;,
+        &quot;path&quot;: &quot;Rule/APNs&quot;,
+        &quot;folder&quot;: &quot;Rule&quot;,
+        &quot;title&quot;: &quot;规则&quot;,
+        &quot;icon&quot;: &quot;R&quot;,
+        &quot;updatedAt&quot;: &quot;2026-07-02T22:19:13Z&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/07/02 22:19&quot;,
+        &quot;sizeText&quot;: &quot;593 B&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/APNs&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/APNs&quot;,
+        &quot;install&quot;: &quot;&quot;
+      },
+      {
+        &quot;name&quot;: &quot;AppleCN&quot;,
+        &quot;path&quot;: &quot;Rule/AppleCN&quot;,
+        &quot;folder&quot;: &quot;Rule&quot;,
+        &quot;title&quot;: &quot;规则&quot;,
+        &quot;icon&quot;: &quot;R&quot;,
+        &quot;updatedAt&quot;: &quot;2026-07-02T22:19:13Z&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/07/02 22:19&quot;,
+        &quot;sizeText&quot;: &quot;453 B&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/AppleCN&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/AppleCN&quot;,
+        &quot;install&quot;: &quot;&quot;
+      },
+      {
+        &quot;name&quot;: &quot;AppleFull&quot;,
+        &quot;path&quot;: &quot;Rule/AppleFull&quot;,
+        &quot;folder&quot;: &quot;Rule&quot;,
+        &quot;title&quot;: &quot;规则&quot;,
+        &quot;icon&quot;: &quot;R&quot;,
+        &quot;updatedAt&quot;: &quot;2026-07-02T22:19:13Z&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/07/02 22:19&quot;,
+        &quot;sizeText&quot;: &quot;9.9 KB&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/AppleFull&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/AppleFull&quot;,
+        &quot;install&quot;: &quot;&quot;
+      },
+      {
+        &quot;name&quot;: &quot;CN&quot;,
+        &quot;path&quot;: &quot;Rule/CN&quot;,
+        &quot;folder&quot;: &quot;Rule&quot;,
+        &quot;title&quot;: &quot;规则&quot;,
+        &quot;icon&quot;: &quot;R&quot;,
+        &quot;updatedAt&quot;: &quot;2026-07-01T23:39:50Z&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/07/01 23:39&quot;,
+        &quot;sizeText&quot;: &quot;473.5 KB&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/CN&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/CN&quot;,
+        &quot;install&quot;: &quot;&quot;
+      },
+      {
+        &quot;name&quot;: &quot;GeoIP&quot;,
+        &quot;path&quot;: &quot;Rule/GeoIP&quot;,
+        &quot;folder&quot;: &quot;Rule&quot;,
+        &quot;title&quot;: &quot;规则&quot;,
+        &quot;icon&quot;: &quot;R&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-14T15:55:44+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/14 15:55&quot;,
+        &quot;sizeText&quot;: &quot;9 B&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/GeoIP&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/GeoIP&quot;,
+        &quot;install&quot;: &quot;&quot;
+      },
+      {
+        &quot;name&quot;: &quot;GeoIP-CN.mmdb&quot;,
+        &quot;path&quot;: &quot;Rule/GeoIP-CN.mmdb&quot;,
+        &quot;folder&quot;: &quot;Rule&quot;,
+        &quot;title&quot;: &quot;规则&quot;,
+        &quot;icon&quot;: &quot;IP&quot;,
+        &quot;updatedAt&quot;: &quot;2026-07-01T23:39:50Z&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/07/01 23:39&quot;,
+        &quot;sizeText&quot;: &quot;357.3 KB&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/GeoIP-CN.mmdb&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/GeoIP-CN.mmdb&quot;,
+        &quot;install&quot;: &quot;&quot;
+      },
+      {
+        &quot;name&quot;: &quot;LAN&quot;,
+        &quot;path&quot;: &quot;Rule/LAN&quot;,
+        &quot;folder&quot;: &quot;Rule&quot;,
+        &quot;title&quot;: &quot;规则&quot;,
+        &quot;icon&quot;: &quot;R&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-20T10:19:27+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/20 10:19&quot;,
+        &quot;sizeText&quot;: &quot;1.5 KB&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/LAN&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/LAN&quot;,
+        &quot;install&quot;: &quot;&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Net-Info-D&quot;,
+        &quot;path&quot;: &quot;Rule/Net-Info-D&quot;,
+        &quot;folder&quot;: &quot;Rule&quot;,
+        &quot;title&quot;: &quot;规则&quot;,
+        &quot;icon&quot;: &quot;R&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-14T15:56:08+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/14 15:56&quot;,
+        &quot;sizeText&quot;: &quot;530 B&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Net-Info-D&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/Net-Info-D&quot;,
+        &quot;install&quot;: &quot;&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Net-Info-G&quot;,
+        &quot;path&quot;: &quot;Rule/Net-Info-G&quot;,
+        &quot;folder&quot;: &quot;Rule&quot;,
+        &quot;title&quot;: &quot;规则&quot;,
+        &quot;icon&quot;: &quot;R&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-14T15:56:32+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/14 15:56&quot;,
+        &quot;sizeText&quot;: &quot;93 B&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Net-Info-G&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/Net-Info-G&quot;,
+        &quot;install&quot;: &quot;&quot;
+      },
+      {
+        &quot;name&quot;: &quot;NotGeoIP&quot;,
+        &quot;path&quot;: &quot;Rule/NotGeoIP&quot;,
+        &quot;folder&quot;: &quot;Rule&quot;,
+        &quot;title&quot;: &quot;规则&quot;,
+        &quot;icon&quot;: &quot;R&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-14T15:56:52+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/14 15:56&quot;,
+        &quot;sizeText&quot;: &quot;17 B&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/NotGeoIP&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/NotGeoIP&quot;,
+        &quot;install&quot;: &quot;&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Outlook&quot;,
+        &quot;path&quot;: &quot;Rule/Outlook&quot;,
+        &quot;folder&quot;: &quot;Rule&quot;,
+        &quot;title&quot;: &quot;规则&quot;,
+        &quot;icon&quot;: &quot;R&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-20T20:28:00+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/20 20:28&quot;,
+        &quot;sizeText&quot;: &quot;1.6 KB&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Outlook&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/Outlook&quot;,
+        &quot;install&quot;: &quot;&quot;
+      },
+      {
+        &quot;name&quot;: &quot;PrivateRule&quot;,
+        &quot;path&quot;: &quot;Rule/PrivateRule&quot;,
+        &quot;folder&quot;: &quot;Rule&quot;,
+        &quot;title&quot;: &quot;规则&quot;,
+        &quot;icon&quot;: &quot;R&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-28T00:02:21+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/28 00:02&quot;,
+        &quot;sizeText&quot;: &quot;39 B&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/PrivateRule&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/PrivateRule&quot;,
+        &quot;install&quot;: &quot;&quot;
+      },
+      {
+        &quot;name&quot;: &quot;REJECT&quot;,
+        &quot;path&quot;: &quot;Rule/REJECT&quot;,
+        &quot;folder&quot;: &quot;Rule&quot;,
+        &quot;title&quot;: &quot;规则&quot;,
+        &quot;icon&quot;: &quot;R&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-21T12:59:21+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/21 12:59&quot;,
+        &quot;sizeText&quot;: &quot;126 B&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/REJECT&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/REJECT&quot;,
+        &quot;install&quot;: &quot;&quot;
+      },
+      {
+        &quot;name&quot;: &quot;STUN&quot;,
+        &quot;path&quot;: &quot;Rule/STUN&quot;,
+        &quot;folder&quot;: &quot;Rule&quot;,
+        &quot;title&quot;: &quot;规则&quot;,
+        &quot;icon&quot;: &quot;R&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-27T23:58:10+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/27 23:58&quot;,
+        &quot;sizeText&quot;: &quot;13 B&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/STUN&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/STUN&quot;,
+        &quot;install&quot;: &quot;&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Telegram&quot;,
+        &quot;path&quot;: &quot;Rule/Telegram&quot;,
+        &quot;folder&quot;: &quot;Rule&quot;,
+        &quot;title&quot;: &quot;规则&quot;,
+        &quot;icon&quot;: &quot;R&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-14T17:30:32+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/14 17:30&quot;,
+        &quot;sizeText&quot;: &quot;1.1 KB&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Rule/Telegram&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/Rule/Telegram&quot;,
+        &quot;install&quot;: &quot;&quot;
+      }
+    ]
+  },
+  {
+    &quot;title&quot;: &quot;脚本&quot;,
+    &quot;folder&quot;: &quot;Scripts&quot;,
+    &quot;files&quot;: [
+      {
+        &quot;name&quot;: &quot;dns-lite.js&quot;,
+        &quot;path&quot;: &quot;Scripts/dns-lite.js&quot;,
+        &quot;folder&quot;: &quot;Scripts&quot;,
+        &quot;title&quot;: &quot;脚本&quot;,
+        &quot;icon&quot;: &quot;JS&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-21T10:07:27+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/21 10:07&quot;,
+        &quot;sizeText&quot;: &quot;19.8 KB&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Scripts/dns-lite.js&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/Scripts/dns-lite.js&quot;,
+        &quot;install&quot;: &quot;&quot;
+      },
+      {
+        &quot;name&quot;: &quot;kill-connections-lite.js&quot;,
+        &quot;path&quot;: &quot;Scripts/kill-connections-lite.js&quot;,
+        &quot;folder&quot;: &quot;Scripts&quot;,
+        &quot;title&quot;: &quot;脚本&quot;,
+        &quot;icon&quot;: &quot;JS&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-19T08:58:50+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/19 08:58&quot;,
+        &quot;sizeText&quot;: &quot;6.4 KB&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/Scripts/kill-connections-lite.js&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/Scripts/kill-connections-lite.js&quot;,
+        &quot;install&quot;: &quot;&quot;
+      }
+    ]
+  },
+  {
+    &quot;title&quot;: &quot;模块&quot;,
+    &quot;folder&quot;: &quot;SurgeModule&quot;,
+    &quot;files&quot;: [
+      {
+        &quot;name&quot;: &quot;AntiFQAD.sgmodule&quot;,
+        &quot;path&quot;: &quot;SurgeModule/AntiFQAD.sgmodule&quot;,
+        &quot;folder&quot;: &quot;SurgeModule&quot;,
+        &quot;title&quot;: &quot;模块&quot;,
+        &quot;icon&quot;: &quot;M&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-21T11:15:56+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/21 11:15&quot;,
+        &quot;sizeText&quot;: &quot;5.5 KB&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/AntiFQAD.sgmodule&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/SurgeModule/AntiFQAD.sgmodule&quot;,
+        &quot;install&quot;: &quot;surge:///install-module?url=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/AntiFQAD.sgmodule&quot;
+      },
+      {
+        &quot;name&quot;: &quot;BlockHTTPDNS.sgmodule&quot;,
+        &quot;path&quot;: &quot;SurgeModule/BlockHTTPDNS.sgmodule&quot;,
+        &quot;folder&quot;: &quot;SurgeModule&quot;,
+        &quot;title&quot;: &quot;模块&quot;,
+        &quot;icon&quot;: &quot;M&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-29T18:20:37+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/29 18:20&quot;,
+        &quot;sizeText&quot;: &quot;12.6 KB&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/BlockHTTPDNS.sgmodule&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/SurgeModule/BlockHTTPDNS.sgmodule&quot;,
+        &quot;install&quot;: &quot;surge:///install-module?url=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/BlockHTTPDNS.sgmodule&quot;
+      },
+      {
+        &quot;name&quot;: &quot;DNS-Lite.sgmodule&quot;,
+        &quot;path&quot;: &quot;SurgeModule/DNS-Lite.sgmodule&quot;,
+        &quot;folder&quot;: &quot;SurgeModule&quot;,
+        &quot;title&quot;: &quot;模块&quot;,
+        &quot;icon&quot;: &quot;M&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-21T10:07:06+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/21 10:07&quot;,
+        &quot;sizeText&quot;: &quot;2.3 KB&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/DNS-Lite.sgmodule&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/SurgeModule/DNS-Lite.sgmodule&quot;,
+        &quot;install&quot;: &quot;surge:///install-module?url=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/DNS-Lite.sgmodule&quot;
+      },
+      {
+        &quot;name&quot;: &quot;DNS-Stability.sgmodule&quot;,
+        &quot;path&quot;: &quot;SurgeModule/DNS-Stability.sgmodule&quot;,
+        &quot;folder&quot;: &quot;SurgeModule&quot;,
+        &quot;title&quot;: &quot;模块&quot;,
+        &quot;icon&quot;: &quot;M&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-21T03:24:17+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/21 03:24&quot;,
+        &quot;sizeText&quot;: &quot;1.9 KB&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/DNS-Stability.sgmodule&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/SurgeModule/DNS-Stability.sgmodule&quot;,
+        &quot;install&quot;: &quot;surge:///install-module?url=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/DNS-Stability.sgmodule&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Google跳转.sgmodule&quot;,
+        &quot;path&quot;: &quot;SurgeModule/Google跳转.sgmodule&quot;,
+        &quot;folder&quot;: &quot;SurgeModule&quot;,
+        &quot;title&quot;: &quot;模块&quot;,
+        &quot;icon&quot;: &quot;M&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-25T23:30:48+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/25 23:30&quot;,
+        &quot;sizeText&quot;: &quot;956 B&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/Google%E8%B7%B3%E8%BD%AC.sgmodule&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/SurgeModule/Google%E8%B7%B3%E8%BD%AC.sgmodule&quot;,
+        &quot;install&quot;: &quot;surge:///install-module?url=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/Google%E8%B7%B3%E8%BD%AC.sgmodule&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Kill-Connections-Lite.sgmodule&quot;,
+        &quot;path&quot;: &quot;SurgeModule/Kill-Connections-Lite.sgmodule&quot;,
+        &quot;folder&quot;: &quot;SurgeModule&quot;,
+        &quot;title&quot;: &quot;模块&quot;,
+        &quot;icon&quot;: &quot;M&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-21T03:26:20+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/21 03:26&quot;,
+        &quot;sizeText&quot;: &quot;2.0 KB&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/Kill-Connections-Lite.sgmodule&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/SurgeModule/Kill-Connections-Lite.sgmodule&quot;,
+        &quot;install&quot;: &quot;surge:///install-module?url=https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/Kill-Connections-Lite.sgmodule&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Luke Egern Boost&quot;,
+        &quot;path&quot;: &quot;SurgeModule/Luke Egern Boost&quot;,
+        &quot;folder&quot;: &quot;SurgeModule&quot;,
+        &quot;title&quot;: &quot;模块&quot;,
+        &quot;icon&quot;: &quot;M&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-20T13:01:12+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/20 13:01&quot;,
+        &quot;sizeText&quot;: &quot;3.7 KB&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/Luke%20Egern%20Boost&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/SurgeModule/Luke%20Egern%20Boost&quot;,
+        &quot;install&quot;: &quot;&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Luke.conf&quot;,
+        &quot;path&quot;: &quot;SurgeModule/Luke.conf&quot;,
+        &quot;folder&quot;: &quot;SurgeModule&quot;,
+        &quot;title&quot;: &quot;模块&quot;,
+        &quot;icon&quot;: &quot;M&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-21T14:22:48+08:00&quot;,
+        &quot;updatedText&quot;: &quot;更新：2026/06/21 14:22&quot;,
+        &quot;sizeText&quot;: &quot;9.8 KB&quot;,
+        &quot;raw&quot;: &quot;https://raw.githubusercontent.com/Luke-Lab666/ProxyKit/main/SurgeModule/Luke.conf&quot;,
+        &quot;github&quot;: &quot;https://github.com/Luke-Lab666/ProxyKit/blob/main/SurgeModule/Luke.conf&quot;,
+        &quot;install&quot;: &quot;&quot;
+      }
+    ]
+  }
+]</script>
+  <script>
+    const tabs = Array.from(document.querySelectorAll(".tab"));
+    const cards = Array.from(document.querySelectorAll(".card"));
+    const search = document.querySelector("#search");
+    const count = document.querySelector("#count");
+    const empty = document.querySelector("#empty");
+    const toast = document.querySelector("#toast");
+
+    let currentFilter = "all";
+
+    function applyFilter() {
+      const keyword = search.value.trim().toLowerCase();
+      let visible = 0;
+
+      for (const card of cards) {
+        const folder = card.dataset.folder || "";
+        const text = card.dataset.search || "";
+        const folderMatched = currentFilter === "all" || folder === currentFilter;
+        const keywordMatched = !keyword || text.includes(keyword);
+        const show = folderMatched && keywordMatched;
+
+        card.style.display = show ? "" : "none";
+
+        if (show) {
+          visible += 1;
+        }
+      }
+
+      count.textContent = visible;
+      empty.style.display = visible ? "none" : "block";
+    }
+
+    for (const tab of tabs) {
+      tab.addEventListener("click", () => {
+        currentFilter = tab.dataset.filter;
+
+        for (const item of tabs) {
+          item.classList.toggle("active", item === tab);
+        }
+
+        applyFilter();
+      });
+    }
+
+    search.addEventListener("input", applyFilter);
+
+    function showToast(text) {
+      toast.textContent = text || "已复制";
+      toast.classList.add("show");
+
+      window.clearTimeout(showToast.timer);
+
+      showToast.timer = window.setTimeout(() => {
+        toast.classList.remove("show");
+      }, 1400);
+    }
+
+    document.addEventListener("click", async (event) => {
+      const target = event.target.closest("[data-copy]");
+
+      if (!target) {
+        return;
+      }
+
+      const text = target.dataset.copy;
+
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("已复制");
+      } catch (error) {
+        const input = document.createElement("input");
+        input.value = text;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        input.remove();
+        showToast("已复制");
+      }
+    });
+
+    applyFilter();
+  </script>
+</body>
+</html>
